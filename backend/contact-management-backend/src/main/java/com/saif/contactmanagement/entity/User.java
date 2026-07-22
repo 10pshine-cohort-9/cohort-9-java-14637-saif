@@ -2,6 +2,8 @@ package com.saif.contactmanagement.entity;
 
 import jakarta.persistence.*;
 import lombok.*;
+import java.util.List;
+
 
 
 @Entity
@@ -21,4 +23,8 @@ public class User {
     private String email;
     private String phoneNumber;
     private String password;
+
+    @OneToMany(mappedBy = "user")
+    private List<Contact> contacts;
+
 }

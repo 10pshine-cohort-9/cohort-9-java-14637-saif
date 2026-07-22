@@ -1,11 +1,10 @@
 package com.saif.contactmanagement.entity;
 
-import jakarta.persistence.Entity;
-import jakarta.persistence.GeneratedValue;
-import jakarta.persistence.GenerationType;
-import jakarta.persistence.Id;
-import jakarta.persistence.Table;
+import jakarta.persistence.*;
 import lombok.*;
+
+
+
 
 @Getter
 @Setter
@@ -14,7 +13,12 @@ import lombok.*;
 @Builder
 @Entity
 @Table(name = "contacts")
+
+
 public class Contact {
+
+
+
 
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
@@ -29,4 +33,12 @@ public class Contact {
     private String address;
     private String notes;
     private Boolean favorite;
+
+
+
+    @ManyToOne
+    @JoinColumn(name = "user_id")
+    private User user;
+
+
 }
