@@ -1,9 +1,9 @@
 package com.saif.contactmanagement.dto.request;
 
-import jakarta.validation.constraints.Email;
-import jakarta.validation.constraints.NotBlank;
-import jakarta.validation.constraints.Size;
+import jakarta.validation.constraints.*;
+
 import lombok.*;
+
 
 @Getter
 @Setter
@@ -20,6 +20,10 @@ public class UserRegistrationRequest {
     private String lastName;
 
     @NotBlank(message = "Phone number is required")
+    @Pattern(
+            regexp = "^\\+?[0-9]{10,15}$",
+            message = "Phone number must contain 10 to 15 digits and may start with +"
+    )
     private String phoneNumber;
 
     @NotBlank(message = "Email is required")
