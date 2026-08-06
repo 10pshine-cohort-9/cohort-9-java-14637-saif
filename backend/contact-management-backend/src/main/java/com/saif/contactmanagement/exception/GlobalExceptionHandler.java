@@ -6,6 +6,7 @@ import org.springframework.web.bind.MethodArgumentNotValidException;
 import org.springframework.web.bind.annotation.*;
 
 import java.time.LocalDateTime;
+import java.time.ZoneId;
 import java.util.HashMap;
 import java.util.Map;
 
@@ -18,7 +19,7 @@ public class GlobalExceptionHandler {
 
         Map<String, Object> response = new HashMap<>();
 
-        response.put("timestamp", LocalDateTime.now());
+        response.put("timestamp", LocalDateTime.now(ZoneId.systemDefault()));
         response.put("status", HttpStatus.CONFLICT.value());
         response.put("error", HttpStatus.CONFLICT.getReasonPhrase());
         response.put("message", ex.getMessage());
@@ -31,12 +32,12 @@ public class GlobalExceptionHandler {
 
         Map<String, String> errors = new HashMap<>();
 
-        ex.getBindingResult().getFieldErrors().forEach(error -> {
+        ex.getBindingResult().getFieldErrors().forEach(error -> 
             errors.putIfAbsent(error.getField(), error.getDefaultMessage());
-        });
+        );
 
         Map<String, Object> response = new HashMap<>();
-        response.put("timestamp", LocalDateTime.now());
+        response.put("timestamp", LocalDateTime.now(ZoneId.systemDefault()));
         response.put("status", HttpStatus.BAD_REQUEST.value());
         response.put("error", HttpStatus.BAD_REQUEST.getReasonPhrase());
         response.put("errors", errors);
