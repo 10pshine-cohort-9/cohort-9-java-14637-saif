@@ -1,6 +1,8 @@
 package com.saif.contactmanagement.service.impl;
 
+import com.saif.contactmanagement.dto.request.LoginRequest;
 import com.saif.contactmanagement.dto.request.UserRegistrationRequest;
+import com.saif.contactmanagement.dto.response.LoginResponse;
 import com.saif.contactmanagement.dto.response.UserResponse;
 import com.saif.contactmanagement.entity.User;
 import com.saif.contactmanagement.exception.EmailAlreadyExistsException;
@@ -57,9 +59,9 @@ public class UserServiceImpl implements UserService {
      * User Login
      */
     @Override
-    public User login(String email, String password) {
+    public LoginResponse login(LoginRequest request) {
 
-        // Will be implemented in the JWT Authentication feature
+        // JWT authentication logic will be implemented next
 
         return null;
     }
