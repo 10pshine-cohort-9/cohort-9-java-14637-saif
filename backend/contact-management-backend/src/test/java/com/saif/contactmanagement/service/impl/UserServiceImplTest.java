@@ -51,6 +51,7 @@ class UserServiceImplTest {
     private LoginRequest loginRequest;
 
     @BeforeEach
+    @SuppressWarnings("unused")
     void setUp() {
         user = User.builder()
                 .id(1L)
@@ -99,7 +100,7 @@ class UserServiceImplTest {
     void shouldRejectRegistrationWhenEmailAlreadyExists() {
         when(userRepository.findByEmail(registrationRequest.getEmail())).thenReturn(Optional.of(user));
 
-        assertThrows(EmailAlreadyExistsException.class, () -> userService.register(registrationRequest));
+        Exception exception = assertThrows(EmailAlreadyExistsException.class, () -> userService.register(registrationRequest));
 
         verify(userRepository, never()).save(any(User.class));
     }
@@ -134,7 +135,7 @@ class UserServiceImplTest {
         when(authenticationManager.authenticate(any(UsernamePasswordAuthenticationToken.class)))
                 .thenThrow(new BadCredentialsException("Bad credentials"));
 
-        assertThrows(BadCredentialsException.class, () -> userService.login(loginRequest));
+        Exception exception = assertThrows(BadCredentialsException.class, () -> userService.login(loginRequest));
         verify(userRepository, never()).findByEmail(anyString());
     }
 
@@ -146,7 +147,7 @@ class UserServiceImplTest {
         when(authenticationManager.authenticate(any(UsernamePasswordAuthenticationToken.class))).thenReturn(authentication);
         when(userRepository.findByEmail(loginRequest.getEmail())).thenReturn(Optional.empty());
 
-        assertThrows(UsernameNotFoundException.class, () -> userService.login(loginRequest));
+        Exception exception = assertThrows(UsernameNotFoundException.class, () -> userService.login(loginRequest));
     }
 
     // --- Change Password Tests ---
@@ -167,7 +168,7 @@ class UserServiceImplTest {
     void shouldRejectChangePasswordWhenUserNotFound() {
         when(userRepository.findById(1L)).thenReturn(Optional.empty());
 
-        assertThrows(UsernameNotFoundException.class, () -> userService.changePassword(1L, "oldPassword", "newPassword"));
+        Exception exception = assertThrows(UsernameNotFoundException.class, () -> userService.changePassword(1L, "oldPassword", "newPassword"));
         verify(userRepository, never()).save(any(User.class));
     }
 
@@ -176,7 +177,7 @@ class UserServiceImplTest {
         when(userRepository.findById(1L)).thenReturn(Optional.of(user));
         when(passwordEncoder.matches("wrongOldPassword", "encodedPassword")).thenReturn(false);
 
-        assertThrows(BadCredentialsException.class, () -> userService.changePassword(1L, "wrongOldPassword", "newPassword"));
+        Exception exception = assertThrows(BadCredentialsException.class, () -> userService.changePassword(1L, "wrongOldPassword", "newPassword"));
         verify(userRepository, never()).save(any(User.class));
     }
 }

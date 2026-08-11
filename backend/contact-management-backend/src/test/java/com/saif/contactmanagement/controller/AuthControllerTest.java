@@ -35,6 +35,7 @@ class AuthControllerTest {
     private AuthController authController;
 
     @BeforeEach
+    @SuppressWarnings("unused")
     void setUp() {
         mockMvc = MockMvcBuilders.standaloneSetup(authController)
                 .setControllerAdvice(new com.saif.contactmanagement.exception.GlobalExceptionHandler())

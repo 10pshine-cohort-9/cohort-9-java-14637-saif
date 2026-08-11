@@ -30,6 +30,7 @@ class CustomUserDetailsServiceTest {
     private User user;
 
     @BeforeEach
+    @SuppressWarnings("unused")
     void setUp() {
         user = User.builder()
                 .id(1L)
@@ -61,7 +62,7 @@ class CustomUserDetailsServiceTest {
     void shouldThrowUsernameNotFoundExceptionWhenUserDoesNotExist() {
         when(userRepository.findByEmail("nonexistent@example.com")).thenReturn(Optional.empty());
 
-        assertThrows(UsernameNotFoundException.class, () ->
+        Exception exception = assertThrows(UsernameNotFoundException.class, () ->
                 customUserDetailsService.loadUserByUsername("nonexistent@example.com"));
 
         verify(userRepository).findByEmail("nonexistent@example.com");

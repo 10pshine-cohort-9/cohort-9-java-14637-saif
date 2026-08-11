@@ -19,12 +19,13 @@ class JwtServiceTest {
     private UserDetails userDetails;
 
     // 256-bit key base64 encoded
-    private final String testSecret = "c3VwZXJzZWNyZXRrZXlzdXBlcnNlY3JldGtleXN1cGVyc2VjcmV0a2V5";
+    private static final String TEST_SECRET = "c3VwZXJzZWNyZXRrZXlzdXBlcnNlY3JldGtleXN1cGVyc2VjcmV0a2V5";
 
     @BeforeEach
+    @SuppressWarnings("unused")
     void setUp() {
         jwtService = new JwtService();
-        ReflectionTestUtils.setField(jwtService, "secret", testSecret);
+        ReflectionTestUtils.setField(jwtService, "secret", TEST_SECRET);
         ReflectionTestUtils.setField(jwtService, "jwtExpiration", 3600000L); // 1 hour
 
         userDetails = new User(
@@ -67,14 +68,14 @@ class JwtServiceTest {
         String token = jwtService.generateToken(userDetails);
         String tamperedToken = token + "modified";
 
-        assertThrows(SignatureException.class, () -> jwtService.extractUsername(tamperedToken));
+        Exception exception = assertThrows(SignatureException.class, () -> jwtService.extractUsername(tamperedToken));
     }
 
     @Test
     void shouldThrowMalformedJwtExceptionWhenTokenMalformed() {
         String malformedToken = "invalidTokenHeader.payload.signature";
 
-        assertThrows(MalformedJwtException.class, () -> jwtService.extractUsername(malformedToken));
+        Exception exception = assertThrows(MalformedJwtException.class, () -> jwtService.extractUsername(malformedToken));
     }
 
     @Test
@@ -83,7 +84,7 @@ class JwtServiceTest {
         ReflectionTestUtils.setField(jwtService, "jwtExpiration", -1000L);
         String token = jwtService.generateToken(userDetails);
 
-        assertThrows(ExpiredJwtException.class, () -> jwtService.extractUsername(token));
+        Exception exception = assertThrows(ExpiredJwtException.class, () -> jwtService.extractUsername(token));
     }
 
     @Test
