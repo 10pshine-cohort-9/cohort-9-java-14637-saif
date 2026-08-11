@@ -1,8 +1,5 @@
 package com.saif.contactmanagement.config;
 
-import com.saif.contactmanagement.filter.JwtAuthenticationFilter;
-import com.saif.contactmanagement.service.impl.CustomUserDetailsService;
-import com.saif.contactmanagement.util.JwtService;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -37,12 +34,6 @@ class SecurityConfigTest {
 
     @Autowired
     private DaoAuthenticationProvider authenticationProvider;
-
-    @MockitoBean
-    private JwtService jwtService;
-
-    @MockitoBean
-    private CustomUserDetailsService customUserDetailsService;
 
     @BeforeEach
     void setUp() {
