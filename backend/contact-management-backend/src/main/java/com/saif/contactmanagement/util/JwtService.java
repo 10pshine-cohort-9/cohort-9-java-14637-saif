@@ -54,6 +54,10 @@ public class JwtService {
                 .getPayload();
     }
 
+    public long getJwtExpiration() {
+        return jwtExpiration;
+    }
+
     private SecretKey getSigningKey() {
         byte[] keyBytes = Decoders.BASE64.decode(secret);
         return Keys.hmacShaKeyFor(keyBytes);

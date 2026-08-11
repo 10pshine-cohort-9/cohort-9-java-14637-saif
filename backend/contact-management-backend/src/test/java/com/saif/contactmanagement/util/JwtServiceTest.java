@@ -1,0 +1,94 @@
+package com.saif.contactmanagement.util;
+
+import io.jsonwebtoken.ExpiredJwtException;
+import io.jsonwebtoken.MalformedJwtException;
+import io.jsonwebtoken.security.SignatureException;
+import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.Test;
+import org.springframework.security.core.userdetails.User;
+import org.springframework.security.core.userdetails.UserDetails;
+import org.springframework.test.util.ReflectionTestUtils;
+
+import java.util.Collections;
+
+import static org.junit.jupiter.api.Assertions.*;
+
+class JwtServiceTest {
+
+    private JwtService jwtService;
+    private UserDetails userDetails;
+
+    // 256-bit key base64 encoded
+    private final String testSecret = "c3VwZXJzZWNyZXRrZXlzdXBlcnNlY3JldGtleXN1cGVyc2VjcmV0a2V5";
+
+    @BeforeEach
+    void setUp() {
+        jwtService = new JwtService();
+        ReflectionTestUtils.setField(jwtService, "secret", testSecret);
+        ReflectionTestUtils.setField(jwtService, "jwtExpiration", 3600000L); // 1 hour
+
+        userDetails = new User(
+                "john.doe@example.com",
+                "password",
+                Collections.emptyList()
+        );
+    }
+
+    @Test
+    void shouldGenerateAndExtractUsernameCorrectly() {
+        String token = jwtService.generateToken(userDetails);
+        assertNotNull(token);
+
+        String username = jwtService.extractUsername(token);
+        assertEquals("john.doe@example.com", username);
+    }
+
+    @Test
+    void shouldValidateTokenSuccessfully() {
+        String token = jwtService.generateToken(userDetails);
+        boolean isValid = jwtService.isTokenValid(token, userDetails);
+        assertTrue(isValid);
+    }
+
+    @Test
+    void shouldFailTokenValidationWhenUsernameDiffers() {
+        String token = jwtService.generateToken(userDetails);
+        UserDetails differentUser = new User(
+                "other@example.com",
+                "password",
+                Collections.emptyList()
+        );
+        boolean isValid = jwtService.isTokenValid(token, differentUser);
+        assertFalse(isValid);
+    }
+
+    @Test
+    void shouldThrowSignatureExceptionWhenTokenTampered() {
+        String token = jwtService.generateToken(userDetails);
+        String tamperedToken = token + "modified";
+
+        assertThrows(SignatureException.class, () -> jwtService.extractUsername(tamperedToken));
+    }
+
+    @Test
+    void shouldThrowMalformedJwtExceptionWhenTokenMalformed() {
+        String malformedToken = "invalidTokenHeader.payload.signature";
+
+        assertThrows(MalformedJwtException.class, () -> jwtService.extractUsername(malformedToken));
+    }
+
+    @Test
+    void shouldThrowExpiredJwtExceptionWhenTokenExpired() {
+        // Set short expiration (e.g. -1000ms)
+        ReflectionTestUtils.setField(jwtService, "jwtExpiration", -1000L);
+        String token = jwtService.generateToken(userDetails);
+
+        assertThrows(ExpiredJwtException.class, () -> jwtService.extractUsername(token));
+    }
+
+    @Test
+    void shouldExposeJwtExpirationTime() {
+        long expiration = jwtService.getJwtExpiration();
+        assertEquals(3600000L, expiration);
+    }
+}

@@ -8,6 +8,13 @@ import com.saif.contactmanagement.entity.User;
 import com.saif.contactmanagement.exception.EmailAlreadyExistsException;
 import com.saif.contactmanagement.repository.UserRepository;
 import com.saif.contactmanagement.service.UserService;
+import com.saif.contactmanagement.util.JwtService;
+import org.springframework.security.authentication.AuthenticationManager;
+import org.springframework.security.authentication.BadCredentialsException;
+import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
+import org.springframework.security.core.Authentication;
+import org.springframework.security.core.userdetails.UserDetails;
+import org.springframework.security.core.userdetails.UsernameNotFoundException;
 import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
 import org.springframework.stereotype.Service;
 
@@ -16,12 +23,18 @@ public class UserServiceImpl implements UserService {
 
     private final UserRepository userRepository;
     private final BCryptPasswordEncoder passwordEncoder;
+    private final AuthenticationManager authenticationManager;
+    private final JwtService jwtService;
 
     // Constructor Injection
     public UserServiceImpl(UserRepository userRepository,
-                           BCryptPasswordEncoder passwordEncoder) {
+                           BCryptPasswordEncoder passwordEncoder,
+                           AuthenticationManager authenticationManager,
+                           JwtService jwtService) {
         this.userRepository = userRepository;
         this.passwordEncoder = passwordEncoder;
+        this.authenticationManager = authenticationManager;
+        this.jwtService = jwtService;
     }
 
     /**
@@ -60,10 +73,31 @@ public class UserServiceImpl implements UserService {
      */
     @Override
     public LoginResponse login(LoginRequest request) {
+        Authentication authentication = authenticationManager.authenticate(
+                new UsernamePasswordAuthenticationToken(request.getEmail(), request.getPassword())
+        );
 
-        // JWT authentication logic will be implemented next
+        UserDetails userDetails = (UserDetails) authentication.getPrincipal();
 
-        return null;
+        User user = userRepository.findByEmail(request.getEmail())
+                .orElseThrow(() -> new UsernameNotFoundException("User not found with email: " + request.getEmail()));
+
+        String token = jwtService.generateToken(userDetails);
+
+        UserResponse userResponse = new UserResponse(
+                user.getId(),
+                user.getFirstName(),
+                user.getLastName(),
+                user.getPhoneNumber(),
+                user.getEmail()
+        );
+
+        return new LoginResponse(
+                token,
+                "Bearer",
+                jwtService.getJwtExpiration(),
+                userResponse
+        );
     }
 
     /**
@@ -73,8 +107,14 @@ public class UserServiceImpl implements UserService {
     public void changePassword(Long userId,
                                String oldPassword,
                                String newPassword) {
+        User user = userRepository.findById(userId)
+                .orElseThrow(() -> new UsernameNotFoundException("User not found"));
 
-        // Will be implemented later
+        if (!passwordEncoder.matches(oldPassword, user.getPassword())) {
+            throw new BadCredentialsException("Incorrect old password");
+        }
 
+        user.setPassword(passwordEncoder.encode(newPassword));
+        userRepository.save(user);
     }
 }

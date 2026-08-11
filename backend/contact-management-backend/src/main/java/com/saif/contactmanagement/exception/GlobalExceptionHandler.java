@@ -32,9 +32,9 @@ public class GlobalExceptionHandler {
 
         Map<String, String> errors = new HashMap<>();
 
-        ex.getBindingResult().getFieldErrors().forEach(error -> 
+        ex.getBindingResult().getFieldErrors().forEach(error -> {
             errors.putIfAbsent(error.getField(), error.getDefaultMessage());
-        );
+        });
 
         Map<String, Object> response = new HashMap<>();
         response.put("timestamp", LocalDateTime.now(ZoneId.systemDefault()));
@@ -43,5 +43,19 @@ public class GlobalExceptionHandler {
         response.put("errors", errors);
 
         return new ResponseEntity<>(response, HttpStatus.BAD_REQUEST);
+    }
+
+    @ExceptionHandler(org.springframework.security.core.AuthenticationException.class)
+    public ResponseEntity<Map<String, Object>> handleAuthenticationException(
+            org.springframework.security.core.AuthenticationException ex) {
+
+        Map<String, Object> response = new HashMap<>();
+
+        response.put("timestamp", LocalDateTime.now(ZoneId.systemDefault()));
+        response.put("status", HttpStatus.UNAUTHORIZED.value());
+        response.put("error", HttpStatus.UNAUTHORIZED.getReasonPhrase());
+        response.put("message", ex.getMessage());
+
+        return new ResponseEntity<>(response, HttpStatus.UNAUTHORIZED);
     }
 }
