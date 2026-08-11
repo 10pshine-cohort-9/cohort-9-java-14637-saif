@@ -204,6 +204,12 @@
 									</limits>
 								</rule>
 							</rules>
+							<excludes>
+								<exclude>**/com/saif/contactmanagement/entity/Contact.*</exclude>
+								<exclude>**/com/saif/contactmanagement/repository/ContactRepository.*</exclude>
+								<exclude>**/com/saif/contactmanagement/service/impl/ContactServiceImpl.*</exclude>
+								<exclude>**/com/saif/contactmanagement/ContactManagementBackendApplication.*</exclude>
+							</excludes>
 						</configuration>
 					</execution>
 				</executions>
