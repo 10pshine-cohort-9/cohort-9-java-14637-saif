@@ -57,6 +57,14 @@ class SecurityConfigTest {
     }
 
     @Test
+    void registerWithValidationErrorShouldReturnBadRequest() throws Exception {
+        mockMvc.perform(post("/api/auth/register")
+                        .contentType("application/json")
+                        .content("{\"firstName\":\"\"}"))
+                .andExpect(status().isBadRequest());
+    }
+
+    @Test
     void protectedEndpointsShouldRequireAuthentication() throws Exception {
         // A protected endpoint (e.g. /api/health) should return 401 Unauthorized
         mockMvc.perform(get("/api/health"))
