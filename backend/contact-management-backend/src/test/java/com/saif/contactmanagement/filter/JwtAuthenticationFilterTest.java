@@ -25,6 +25,11 @@ import static org.mockito.Mockito.*;
 @ExtendWith(MockitoExtension.class)
 class JwtAuthenticationFilterTest {
 
+    private static final String AUTH_HEADER = "Authorization";
+    private static final String BEARER_PREFIX = "Bearer ";
+    private static final String VALID_TOKEN = "validToken";
+    private static final String USER_EMAIL = "john@example.com";
+
     @Mock
     private JwtService jwtService;
 
@@ -55,7 +60,7 @@ class JwtAuthenticationFilterTest {
 
     @Test
     void shouldContinueFilterChainWhenNoAuthHeader() throws ServletException, IOException {
-        when(request.getHeader("Authorization")).thenReturn(null);
+        when(request.getHeader(AUTH_HEADER)).thenReturn(null);
 
         jwtAuthenticationFilter.doFilterInternal(request, response, filterChain);
 
@@ -65,7 +70,7 @@ class JwtAuthenticationFilterTest {
 
     @Test
     void shouldContinueFilterChainWhenHeaderDoesNotStartWithBearer() throws ServletException, IOException {
-        when(request.getHeader("Authorization")).thenReturn("Basic credentials");
+        when(request.getHeader(AUTH_HEADER)).thenReturn("Basic credentials");
 
         jwtAuthenticationFilter.doFilterInternal(request, response, filterChain);
 
@@ -75,7 +80,7 @@ class JwtAuthenticationFilterTest {
 
     @Test
     void shouldContinueFilterChainWhenTokenExtractionFails() throws ServletException, IOException {
-        when(request.getHeader("Authorization")).thenReturn("Bearer invalid.token");
+        when(request.getHeader(AUTH_HEADER)).thenReturn(BEARER_PREFIX + "invalid.token");
         when(jwtService.extractUsername("invalid.token")).thenThrow(new RuntimeException("Parsing error"));
 
         jwtAuthenticationFilter.doFilterInternal(request, response, filterChain);
@@ -86,12 +91,12 @@ class JwtAuthenticationFilterTest {
 
     @Test
     void shouldPopulateSecurityContextWhenTokenIsValid() throws ServletException, IOException {
-        String token = "validToken";
-        String email = "john@example.com";
+        String token = VALID_TOKEN;
+        String email = USER_EMAIL;
         UserDetails userDetails = mock(UserDetails.class);
         when(userDetails.getAuthorities()).thenReturn(Collections.emptyList());
 
-        when(request.getHeader("Authorization")).thenReturn("Bearer " + token);
+        when(request.getHeader(AUTH_HEADER)).thenReturn(BEARER_PREFIX + token);
         when(jwtService.extractUsername(token)).thenReturn(email);
         when(userDetailsService.loadUserByUsername(email)).thenReturn(userDetails);
         when(jwtService.isTokenValid(token, userDetails)).thenReturn(true);
@@ -106,10 +111,10 @@ class JwtAuthenticationFilterTest {
     @Test
     void shouldNotPopulateSecurityContextWhenTokenIsInvalid() throws ServletException, IOException {
         String token = "invalidToken";
-        String email = "john@example.com";
+        String email = USER_EMAIL;
         UserDetails userDetails = mock(UserDetails.class);
 
-        when(request.getHeader("Authorization")).thenReturn("Bearer " + token);
+        when(request.getHeader(AUTH_HEADER)).thenReturn(BEARER_PREFIX + token);
         when(jwtService.extractUsername(token)).thenReturn(email);
         when(userDetailsService.loadUserByUsername(email)).thenReturn(userDetails);
         when(jwtService.isTokenValid(token, userDetails)).thenReturn(false);
@@ -122,12 +127,12 @@ class JwtAuthenticationFilterTest {
 
     @Test
     void shouldNotAuthenticateWhenAlreadyAuthenticated() throws ServletException, IOException {
-        String token = "validToken";
-        String email = "john@example.com";
+        String token = VALID_TOKEN;
+        String email = USER_EMAIL;
         org.springframework.security.core.Authentication existingAuth = mock(org.springframework.security.core.Authentication.class);
         SecurityContextHolder.getContext().setAuthentication(existingAuth);
 
-        when(request.getHeader("Authorization")).thenReturn("Bearer " + token);
+        when(request.getHeader(AUTH_HEADER)).thenReturn(BEARER_PREFIX + token);
         when(jwtService.extractUsername(token)).thenReturn(email);
 
         jwtAuthenticationFilter.doFilterInternal(request, response, filterChain);
@@ -138,9 +143,9 @@ class JwtAuthenticationFilterTest {
 
     @Test
     void shouldNotAuthenticateWhenUserEmailIsNull() throws ServletException, IOException {
-        String token = "validToken";
+        String token = VALID_TOKEN;
 
-        when(request.getHeader("Authorization")).thenReturn("Bearer " + token);
+        when(request.getHeader(AUTH_HEADER)).thenReturn(BEARER_PREFIX + token);
         when(jwtService.extractUsername(token)).thenReturn(null);
 
         jwtAuthenticationFilter.doFilterInternal(request, response, filterChain);

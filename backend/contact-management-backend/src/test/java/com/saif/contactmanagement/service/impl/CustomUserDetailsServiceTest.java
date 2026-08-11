@@ -21,6 +21,9 @@ import static org.mockito.Mockito.when;
 @ExtendWith(MockitoExtension.class)
 class CustomUserDetailsServiceTest {
 
+    private static final String USER_EMAIL = "john.doe@example.com";
+    private static final String NONEXISTENT_EMAIL = "nonexistent@example.com";
+
     @Mock
     private UserRepository userRepository;
 
@@ -35,7 +38,7 @@ class CustomUserDetailsServiceTest {
                 .id(1L)
                 .firstName("John")
                 .lastName("Doe")
-                .email("john.doe@example.com")
+                .email(USER_EMAIL)
                 .phoneNumber("1234567890")
                 .password("encodedPassword")
                 .build();
@@ -43,28 +46,28 @@ class CustomUserDetailsServiceTest {
 
     @Test
     void shouldLoadUserByUsernameSuccessfully() {
-        when(userRepository.findByEmail("john.doe@example.com")).thenReturn(Optional.of(user));
+        when(userRepository.findByEmail(USER_EMAIL)).thenReturn(Optional.of(user));
 
-        UserDetails userDetails = customUserDetailsService.loadUserByUsername("john.doe@example.com");
+        UserDetails userDetails = customUserDetailsService.loadUserByUsername(USER_EMAIL);
 
         assertNotNull(userDetails);
-        assertEquals("john.doe@example.com", userDetails.getUsername());
+        assertEquals(USER_EMAIL, userDetails.getUsername());
         assertEquals("encodedPassword", userDetails.getPassword());
         assertTrue(userDetails.getAuthorities().stream()
                 .map(GrantedAuthority::getAuthority)
                 .anyMatch(auth -> auth.equals("USER")));
 
-        verify(userRepository).findByEmail("john.doe@example.com");
+        verify(userRepository).findByEmail(USER_EMAIL);
     }
 
     @Test
     void shouldThrowUsernameNotFoundExceptionWhenUserDoesNotExist() {
-        when(userRepository.findByEmail("nonexistent@example.com")).thenReturn(Optional.empty());
+        when(userRepository.findByEmail(NONEXISTENT_EMAIL)).thenReturn(Optional.empty());
 
         Exception exception = assertThrows(UsernameNotFoundException.class, () ->
-                customUserDetailsService.loadUserByUsername("nonexistent@example.com"));
+                customUserDetailsService.loadUserByUsername(NONEXISTENT_EMAIL));
         assertNotNull(exception);
 
-        verify(userRepository).findByEmail("nonexistent@example.com");
+        verify(userRepository).findByEmail(NONEXISTENT_EMAIL);
     }
 }
