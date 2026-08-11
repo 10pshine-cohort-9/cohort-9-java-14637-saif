@@ -153,4 +153,19 @@ class JwtAuthenticationFilterTest {
         verify(userDetailsService, never()).loadUserByUsername(anyString());
         verify(filterChain).doFilter(request, response);
     }
+
+    @Test
+    void shouldHandleUsernameNotFoundExceptionGracefully() throws ServletException, IOException {
+        String token = VALID_TOKEN;
+        String email = USER_EMAIL;
+
+        when(request.getHeader(AUTH_HEADER)).thenReturn(BEARER_PREFIX + token);
+        when(jwtService.extractUsername(token)).thenReturn(email);
+        when(userDetailsService.loadUserByUsername(email)).thenThrow(new org.springframework.security.core.userdetails.UsernameNotFoundException("Deleted user"));
+
+        jwtAuthenticationFilter.doFilterInternal(request, response, filterChain);
+
+        assertNull(SecurityContextHolder.getContext().getAuthentication());
+        verify(filterChain).doFilter(request, response);
+    }
 }
