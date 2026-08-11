@@ -12,6 +12,9 @@ import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.ResponseStatus;
 
+import com.saif.contactmanagement.dto.request.LoginRequest;
+import com.saif.contactmanagement.dto.response.LoginResponse;
+
 @RestController
 @RequestMapping("/api/auth")
 public class AuthController {
@@ -27,4 +30,11 @@ public class AuthController {
     public UserResponse register(@Valid @RequestBody UserRegistrationRequest request) {
         return userService.register(request);
     }
+
+    @PostMapping("/login")
+    @ResponseStatus(HttpStatus.OK)
+    public LoginResponse login(@Valid @RequestBody LoginRequest request) {
+        return userService.login(request);
+    }
+
 }
