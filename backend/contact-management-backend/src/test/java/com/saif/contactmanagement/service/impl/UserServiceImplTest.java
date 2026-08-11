@@ -51,8 +51,7 @@ class UserServiceImplTest {
     private LoginRequest loginRequest;
 
     @BeforeEach
-    @SuppressWarnings("unused")
-    void setUp() {
+    public void setUp() {
         user = User.builder()
                 .id(1L)
                 .firstName("John")
@@ -101,6 +100,7 @@ class UserServiceImplTest {
         when(userRepository.findByEmail(registrationRequest.getEmail())).thenReturn(Optional.of(user));
 
         Exception exception = assertThrows(EmailAlreadyExistsException.class, () -> userService.register(registrationRequest));
+        assertNotNull(exception);
 
         verify(userRepository, never()).save(any(User.class));
     }
@@ -136,6 +136,7 @@ class UserServiceImplTest {
                 .thenThrow(new BadCredentialsException("Bad credentials"));
 
         Exception exception = assertThrows(BadCredentialsException.class, () -> userService.login(loginRequest));
+        assertNotNull(exception);
         verify(userRepository, never()).findByEmail(anyString());
     }
 
@@ -148,6 +149,7 @@ class UserServiceImplTest {
         when(userRepository.findByEmail(loginRequest.getEmail())).thenReturn(Optional.empty());
 
         Exception exception = assertThrows(UsernameNotFoundException.class, () -> userService.login(loginRequest));
+        assertNotNull(exception);
     }
 
     // --- Change Password Tests ---
@@ -169,6 +171,7 @@ class UserServiceImplTest {
         when(userRepository.findById(1L)).thenReturn(Optional.empty());
 
         Exception exception = assertThrows(UsernameNotFoundException.class, () -> userService.changePassword(1L, "oldPassword", "newPassword"));
+        assertNotNull(exception);
         verify(userRepository, never()).save(any(User.class));
     }
 
@@ -178,6 +181,7 @@ class UserServiceImplTest {
         when(passwordEncoder.matches("wrongOldPassword", "encodedPassword")).thenReturn(false);
 
         Exception exception = assertThrows(BadCredentialsException.class, () -> userService.changePassword(1L, "wrongOldPassword", "newPassword"));
+        assertNotNull(exception);
         verify(userRepository, never()).save(any(User.class));
     }
 }

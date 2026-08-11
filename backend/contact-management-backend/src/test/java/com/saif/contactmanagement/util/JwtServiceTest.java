@@ -19,11 +19,11 @@ class JwtServiceTest {
     private UserDetails userDetails;
 
     // 256-bit key base64 encoded
+    @SuppressWarnings("java:S6418")
     private static final String TEST_SECRET = "c3VwZXJzZWNyZXRrZXlzdXBlcnNlY3JldGtleXN1cGVyc2VjcmV0a2V5";
 
     @BeforeEach
-    @SuppressWarnings("unused")
-    void setUp() {
+    public void setUp() {
         jwtService = new JwtService();
         ReflectionTestUtils.setField(jwtService, "secret", TEST_SECRET);
         ReflectionTestUtils.setField(jwtService, "jwtExpiration", 3600000L); // 1 hour
@@ -69,6 +69,7 @@ class JwtServiceTest {
         String tamperedToken = token + "modified";
 
         Exception exception = assertThrows(SignatureException.class, () -> jwtService.extractUsername(tamperedToken));
+        assertNotNull(exception);
     }
 
     @Test
@@ -76,6 +77,7 @@ class JwtServiceTest {
         String malformedToken = "invalidTokenHeader.payload.signature";
 
         Exception exception = assertThrows(MalformedJwtException.class, () -> jwtService.extractUsername(malformedToken));
+        assertNotNull(exception);
     }
 
     @Test
@@ -85,6 +87,7 @@ class JwtServiceTest {
         String token = jwtService.generateToken(userDetails);
 
         Exception exception = assertThrows(ExpiredJwtException.class, () -> jwtService.extractUsername(token));
+        assertNotNull(exception);
     }
 
     @Test

@@ -44,14 +44,12 @@ class JwtAuthenticationFilterTest {
     private JwtAuthenticationFilter jwtAuthenticationFilter;
 
     @BeforeEach
-    @SuppressWarnings("unused")
-    void setUp() {
+    public void setUp() {
         SecurityContextHolder.clearContext();
     }
 
     @AfterEach
-    @SuppressWarnings("unused")
-    void tearDown() {
+    public void tearDown() {
         SecurityContextHolder.clearContext();
     }
 
