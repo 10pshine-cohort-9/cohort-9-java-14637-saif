@@ -32,7 +32,6 @@ class GlobalExceptionHandlerTest {
     }
 
     @Test
-    @SuppressWarnings("unchecked")
     void shouldHandleMethodArgumentNotValidException() {
         MethodArgumentNotValidException ex = mock(MethodArgumentNotValidException.class);
         BindingResult bindingResult = mock(BindingResult.class);
@@ -47,7 +46,7 @@ class GlobalExceptionHandlerTest {
         assertEquals(HttpStatus.BAD_REQUEST, response.getStatusCode());
         assertEquals(HttpStatus.BAD_REQUEST.value(), response.getBody().get("status"));
 
-        Map<String, String> errors = (Map<String, String>) response.getBody().get("errors");
+        Map<?, ?> errors = (Map<?, ?>) response.getBody().get("errors");
         assertNotNull(errors);
         assertEquals("Invalid email format", errors.get("email"));
     }
