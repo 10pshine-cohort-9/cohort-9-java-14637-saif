@@ -120,14 +120,14 @@ class UserServiceImplTest {
         when(authenticationManager.authenticate(any(UsernamePasswordAuthenticationToken.class))).thenReturn(authentication);
         when(userRepository.findByEmail(loginRequest.getEmail())).thenReturn(Optional.of(user));
         when(jwtService.generateToken(userDetails)).thenReturn("dummyJwtToken");
-        when(jwtService.getJwtExpiration()).thenReturn(3600000L);
+        when(jwtService.getJwtExpiration()).thenReturn(3600L);
 
         LoginResponse response = userService.login(loginRequest);
 
         assertNotNull(response);
         assertEquals("dummyJwtToken", response.getAccessToken());
         assertEquals("Bearer", response.getTokenType());
-        assertEquals(3600000L, response.getExpiresIn());
+        assertEquals(3600L, response.getExpiresIn());
         assertNotNull(response.getUser());
         assertEquals(user.getEmail(), response.getUser().getEmail());
 
@@ -168,6 +168,7 @@ class UserServiceImplTest {
         userService.changePassword(1L, OLD_PASSWORD, NEW_PASSWORD);
 
         assertEquals("newEncodedPassword", user.getPassword());
+        assertEquals(2, user.getCredentialVersion());
         verify(userRepository).save(user);
     }
 

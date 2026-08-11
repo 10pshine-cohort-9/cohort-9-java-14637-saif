@@ -55,6 +55,7 @@ public class UserServiceImpl implements UserService {
                 .email(request.getEmail())
                 .phoneNumber(request.getPhoneNumber())
                 .password(encodedPassword)
+                .credentialVersion(1)
                 .build();
 
         User savedUser = userRepository.save(user);
@@ -115,6 +116,7 @@ public class UserServiceImpl implements UserService {
         }
 
         user.setPassword(passwordEncoder.encode(newPassword));
+        user.setCredentialVersion(user.getCredentialVersion() + 1);
         userRepository.save(user);
     }
 }

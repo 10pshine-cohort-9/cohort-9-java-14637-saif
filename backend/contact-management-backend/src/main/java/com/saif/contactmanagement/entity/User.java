@@ -33,6 +33,10 @@ public class User {
     @Column(nullable = false)
     private String password;
 
+    @Column(nullable = false)
+    @Builder.Default
+    private int credentialVersion = 1;
+
     @OneToMany(mappedBy = "user")
     private List<Contact> contacts;
 

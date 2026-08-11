@@ -3,6 +3,7 @@ package com.saif.contactmanagement.util;
 import io.jsonwebtoken.ExpiredJwtException;
 import io.jsonwebtoken.MalformedJwtException;
 import io.jsonwebtoken.security.SignatureException;
+import com.saif.contactmanagement.service.impl.CustomUserDetails;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.springframework.security.core.userdetails.User;
@@ -26,7 +27,7 @@ class JwtServiceTest {
     public void setUp() {
         jwtService = new JwtService();
         ReflectionTestUtils.setField(jwtService, "secret", TEST_SECRET);
-        ReflectionTestUtils.setField(jwtService, "jwtExpiration", 3600000L); // 1 hour
+        ReflectionTestUtils.setField(jwtService, "jwtExpiration", 3600L); // 1 hour in seconds
 
         userDetails = new User(
                 "john.doe@example.com",
@@ -64,6 +65,25 @@ class JwtServiceTest {
     }
 
     @Test
+    void shouldFailTokenValidationWhenCredentialVersionDiffers() {
+        com.saif.contactmanagement.entity.User userEntity = com.saif.contactmanagement.entity.User.builder()
+                .email("john.doe@example.com")
+                .password("password")
+                .credentialVersion(1)
+                .build();
+        CustomUserDetails customUserDetails1 = new CustomUserDetails(userEntity);
+
+        String token = jwtService.generateToken(customUserDetails1);
+
+        // Increment user's credential version
+        userEntity.setCredentialVersion(2);
+        CustomUserDetails customUserDetails2 = new CustomUserDetails(userEntity);
+
+        boolean isValid = jwtService.isTokenValid(token, customUserDetails2);
+        assertFalse(isValid);
+    }
+
+    @Test
     void shouldThrowSignatureExceptionWhenTokenTampered() {
         String token = jwtService.generateToken(userDetails);
         String tamperedToken = token + "modified";
@@ -82,8 +102,8 @@ class JwtServiceTest {
 
     @Test
     void shouldThrowExpiredJwtExceptionWhenTokenExpired() {
-        // Set short expiration (e.g. -1000ms)
-        ReflectionTestUtils.setField(jwtService, "jwtExpiration", -1000L);
+        // Set short expiration (e.g. -1s)
+        ReflectionTestUtils.setField(jwtService, "jwtExpiration", -1L);
         String token = jwtService.generateToken(userDetails);
 
         Exception exception = assertThrows(ExpiredJwtException.class, () -> jwtService.extractUsername(token));
@@ -93,6 +113,6 @@ class JwtServiceTest {
     @Test
     void shouldExposeJwtExpirationTime() {
         long expiration = jwtService.getJwtExpiration();
-        assertEquals(3600000L, expiration);
+        assertEquals(3600L, expiration);
     }
 }

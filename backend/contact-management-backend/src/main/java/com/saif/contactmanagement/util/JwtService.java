@@ -6,6 +6,7 @@ import io.jsonwebtoken.io.Decoders;
 import io.jsonwebtoken.security.Keys;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.security.core.userdetails.UserDetails;
+import com.saif.contactmanagement.service.impl.CustomUserDetails;
 import org.springframework.stereotype.Service;
 
 import javax.crypto.SecretKey;
@@ -21,10 +22,15 @@ public class JwtService {
     private long jwtExpiration;
 
     public String generateToken(UserDetails userDetails) {
+        int version = 1;
+        if (userDetails instanceof CustomUserDetails) {
+            version = ((CustomUserDetails) userDetails).getCredentialVersion();
+        }
         return Jwts.builder()
                 .subject(userDetails.getUsername())
+                .claim("version", version)
                 .issuedAt(new Date())
-                .expiration(new Date(System.currentTimeMillis() + jwtExpiration))
+                .expiration(new Date(System.currentTimeMillis() + jwtExpiration * 1000))
                 .signWith(getSigningKey())
                 .compact();
     }
@@ -34,8 +40,14 @@ public class JwtService {
     }
 
     public boolean isTokenValid(String token, UserDetails userDetails) {
+        Integer tokenVersion = extractAllClaims(token).get("version", Integer.class);
+        int currentVersion = 1;
+        if (userDetails instanceof CustomUserDetails) {
+            currentVersion = ((CustomUserDetails) userDetails).getCredentialVersion();
+        }
         return extractUsername(token).equals(userDetails.getUsername())
-                && !isTokenExpired(token);
+                && !isTokenExpired(token)
+                && (tokenVersion != null && tokenVersion == currentVersion);
     }
 
     private boolean isTokenExpired(String token) {
