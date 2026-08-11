@@ -31,6 +31,11 @@ import static org.mockito.Mockito.*;
 @ExtendWith(MockitoExtension.class)
 class UserServiceImplTest {
 
+    private static final String USER_EMAIL = "john.doe@example.com";
+    private static final String ENCODED_PASSWORD = "encodedPassword";
+    private static final String OLD_PASSWORD = "oldPassword";
+    private static final String NEW_PASSWORD = "newPassword";
+
     @Mock
     private UserRepository userRepository;
 
@@ -56,21 +61,21 @@ class UserServiceImplTest {
                 .id(1L)
                 .firstName("John")
                 .lastName("Doe")
-                .email("john.doe@example.com")
+                .email(USER_EMAIL)
                 .phoneNumber("1234567890")
-                .password("encodedPassword")
+                .password(ENCODED_PASSWORD)
                 .build();
 
         registrationRequest = new UserRegistrationRequest(
                 "John",
                 "Doe",
                 "1234567890",
-                "john.doe@example.com",
+                USER_EMAIL,
                 "password"
         );
 
         loginRequest = new LoginRequest(
-                "john.doe@example.com",
+                USER_EMAIL,
                 "password"
         );
     }
@@ -80,7 +85,7 @@ class UserServiceImplTest {
     @Test
     void shouldRegisterUserSuccessfully() {
         when(userRepository.findByEmail(registrationRequest.getEmail())).thenReturn(Optional.empty());
-        when(passwordEncoder.encode(registrationRequest.getPassword())).thenReturn("encodedPassword");
+        when(passwordEncoder.encode(registrationRequest.getPassword())).thenReturn(ENCODED_PASSWORD);
         when(userRepository.save(any(User.class))).thenReturn(user);
 
         UserResponse response = userService.register(registrationRequest);
@@ -157,10 +162,10 @@ class UserServiceImplTest {
     @Test
     void shouldChangePasswordSuccessfully() {
         when(userRepository.findById(1L)).thenReturn(Optional.of(user));
-        when(passwordEncoder.matches("oldPassword", "encodedPassword")).thenReturn(true);
-        when(passwordEncoder.encode("newPassword")).thenReturn("newEncodedPassword");
+        when(passwordEncoder.matches(OLD_PASSWORD, ENCODED_PASSWORD)).thenReturn(true);
+        when(passwordEncoder.encode(NEW_PASSWORD)).thenReturn("newEncodedPassword");
 
-        userService.changePassword(1L, "oldPassword", "newPassword");
+        userService.changePassword(1L, OLD_PASSWORD, NEW_PASSWORD);
 
         assertEquals("newEncodedPassword", user.getPassword());
         verify(userRepository).save(user);
@@ -170,7 +175,7 @@ class UserServiceImplTest {
     void shouldRejectChangePasswordWhenUserNotFound() {
         when(userRepository.findById(1L)).thenReturn(Optional.empty());
 
-        Exception exception = assertThrows(UsernameNotFoundException.class, () -> userService.changePassword(1L, "oldPassword", "newPassword"));
+        Exception exception = assertThrows(UsernameNotFoundException.class, () -> userService.changePassword(1L, OLD_PASSWORD, NEW_PASSWORD));
         assertNotNull(exception);
         verify(userRepository, never()).save(any(User.class));
     }
@@ -178,9 +183,9 @@ class UserServiceImplTest {
     @Test
     void shouldRejectChangePasswordWhenOldPasswordIncorrect() {
         when(userRepository.findById(1L)).thenReturn(Optional.of(user));
-        when(passwordEncoder.matches("wrongOldPassword", "encodedPassword")).thenReturn(false);
+        when(passwordEncoder.matches("wrongOldPassword", ENCODED_PASSWORD)).thenReturn(false);
 
-        Exception exception = assertThrows(BadCredentialsException.class, () -> userService.changePassword(1L, "wrongOldPassword", "newPassword"));
+        Exception exception = assertThrows(BadCredentialsException.class, () -> userService.changePassword(1L, "wrongOldPassword", NEW_PASSWORD));
         assertNotNull(exception);
         verify(userRepository, never()).save(any(User.class));
     }
