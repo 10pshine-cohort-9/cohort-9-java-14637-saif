@@ -1,14 +1,14 @@
 package com.saif.contactmanagement.service;
 
 import com.saif.contactmanagement.entity.Contact;
-
-import java.util.List;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.Pageable;
 
 public interface ContactService {
 
     Contact createContact(Contact contact);
 
-    List<Contact> getAllContacts(Long userId);
+    Page<Contact> getAllContacts(Long userId, Pageable pageable);
 
     Contact getContactById(Long id);
 
@@ -16,5 +16,5 @@ public interface ContactService {
 
     void deleteContact(Long id);
 
-    List<Contact> searchContacts(Long userId, String keyword);
+    Page<Contact> searchContacts(Long userId, String keyword, Pageable pageable);
 }

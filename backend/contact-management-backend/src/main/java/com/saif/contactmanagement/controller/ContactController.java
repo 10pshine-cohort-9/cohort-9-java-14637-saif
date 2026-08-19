@@ -12,6 +12,10 @@ import org.springframework.security.core.Authentication;
 import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.web.bind.annotation.*;
 
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.PageRequest;
+import org.springframework.data.domain.Pageable;
+import org.springframework.data.domain.Sort;
 import java.util.List;
 import java.util.stream.Collectors;
 
@@ -72,12 +76,18 @@ public class ContactController {
     }
 
     @GetMapping
-    public List<ContactResponse> getAllContacts() {
+    public Page<ContactResponse> getAllContacts(
+            @RequestParam(defaultValue = "0") int page,
+            @RequestParam(defaultValue = "10") int size,
+            @RequestParam(defaultValue = "firstName") String sortBy,
+            @RequestParam(defaultValue = "asc") String direction
+    ) {
         Long userId = getCurrentUserId();
-        List<Contact> contacts = contactService.getAllContacts(userId);
-        return contacts.stream()
-                .map(this::toResponse)
-                .collect(Collectors.toList());
+        Sort sort = direction.equalsIgnoreCase("desc") ? Sort.by(sortBy).descending() : Sort.by(sortBy).ascending();
+        int limitSize = Math.min(size, 10);
+        Pageable pageable = PageRequest.of(page, limitSize, sort);
+        Page<Contact> contactsPage = contactService.getAllContacts(userId, pageable);
+        return contactsPage.map(this::toResponse);
     }
 
     @GetMapping("/{id}")
@@ -100,11 +110,18 @@ public class ContactController {
     }
 
     @GetMapping("/search")
-    public List<ContactResponse> searchContacts(@RequestParam String keyword) {
+    public Page<ContactResponse> searchContacts(
+            @RequestParam String keyword,
+            @RequestParam(defaultValue = "0") int page,
+            @RequestParam(defaultValue = "10") int size,
+            @RequestParam(defaultValue = "firstName") String sortBy,
+            @RequestParam(defaultValue = "asc") String direction
+    ) {
         Long userId = getCurrentUserId();
-        List<Contact> contacts = contactService.searchContacts(userId, keyword);
-        return contacts.stream()
-                .map(this::toResponse)
-                .collect(Collectors.toList());
+        Sort sort = direction.equalsIgnoreCase("desc") ? Sort.by(sortBy).descending() : Sort.by(sortBy).ascending();
+        int limitSize = Math.min(size, 10);
+        Pageable pageable = PageRequest.of(page, limitSize, sort);
+        Page<Contact> contactsPage = contactService.searchContacts(userId, keyword, pageable);
+        return contactsPage.map(this::toResponse);
     }
 }

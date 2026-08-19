@@ -16,6 +16,10 @@ import org.springframework.security.core.Authentication;
 import org.springframework.security.core.context.SecurityContext;
 import org.springframework.security.core.context.SecurityContextHolder;
 
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.PageImpl;
+import org.springframework.data.domain.PageRequest;
+import org.springframework.data.domain.Pageable;
 import java.util.Collections;
 import java.util.List;
 import java.util.Optional;
@@ -138,21 +142,24 @@ class ContactServiceImplTest {
     @Test
     void shouldGetAllContactsSuccessfully() {
         mockSecurityContext(currentUser);
-        when(contactRepository.findByUserId(1L)).thenReturn(Collections.singletonList(contact));
+        Pageable pageable = PageRequest.of(0, 10);
+        Page<Contact> contactPage = new PageImpl<>(Collections.singletonList(contact));
+        when(contactRepository.findByUserId(1L, pageable)).thenReturn(contactPage);
 
-        List<Contact> result = contactService.getAllContacts(1L);
+        Page<Contact> result = contactService.getAllContacts(1L, pageable);
 
-        assertEquals(1, result.size());
-        assertEquals(contact, result.get(0));
-        verify(contactRepository).findByUserId(1L);
+        assertEquals(1, result.getTotalElements());
+        assertEquals(contact, result.getContent().get(0));
+        verify(contactRepository).findByUserId(1L, pageable);
     }
 
     @Test
     void shouldThrowResourceNotFoundWhenGettingAllContactsOfOtherUser() {
         mockSecurityContext(currentUser);
+        Pageable pageable = PageRequest.of(0, 10);
 
-        assertThrows(ResourceNotFoundException.class, () -> contactService.getAllContacts(2L));
-        verify(contactRepository, never()).findByUserId(anyLong());
+        assertThrows(ResourceNotFoundException.class, () -> contactService.getAllContacts(2L, pageable));
+        verify(contactRepository, never()).findByUserId(anyLong(), any(Pageable.class));
     }
 
     // --- Get Contact By ID Tests ---
@@ -281,23 +288,26 @@ class ContactServiceImplTest {
     @Test
     void shouldSearchContactsSuccessfully() {
         mockSecurityContext(currentUser);
+        Pageable pageable = PageRequest.of(0, 10);
+        Page<Contact> contactPage = new PageImpl<>(Collections.singletonList(contact));
         when(contactRepository.findByUserIdAndFirstNameContainingIgnoreCaseOrUserIdAndLastNameContainingIgnoreCase(
-                1L, "keyword", 1L, "keyword"))
-                .thenReturn(Collections.singletonList(contact));
+                1L, "keyword", 1L, "keyword", pageable))
+                .thenReturn(contactPage);
 
-        List<Contact> result = contactService.searchContacts(1L, "keyword");
+        Page<Contact> result = contactService.searchContacts(1L, "keyword", pageable);
 
-        assertEquals(1, result.size());
-        assertEquals(contact, result.get(0));
+        assertEquals(1, result.getTotalElements());
+        assertEquals(contact, result.getContent().get(0));
     }
 
     @Test
     void shouldThrowResourceNotFoundWhenSearchingOtherUserContacts() {
         mockSecurityContext(currentUser);
+        Pageable pageable = PageRequest.of(0, 10);
 
-        assertThrows(ResourceNotFoundException.class, () -> contactService.searchContacts(2L, "keyword"));
+        assertThrows(ResourceNotFoundException.class, () -> contactService.searchContacts(2L, "keyword", pageable));
         verify(contactRepository, never()).findByUserIdAndFirstNameContainingIgnoreCaseOrUserIdAndLastNameContainingIgnoreCase(
-                anyLong(), anyString(), anyLong(), anyString());
+                anyLong(), anyString(), anyLong(), anyString(), any(Pageable.class));
     }
 
     @Test

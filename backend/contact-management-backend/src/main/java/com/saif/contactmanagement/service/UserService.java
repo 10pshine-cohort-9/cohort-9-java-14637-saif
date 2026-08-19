@@ -14,4 +14,7 @@ public interface UserService {
                         String oldPassword,
                         String newPassword);
 
+    UserResponse getProfile(Long userId);
+
+    UserResponse updateProfile(Long userId, com.saif.contactmanagement.dto.request.UserProfileRequest request);
 }

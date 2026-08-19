@@ -190,4 +190,50 @@ class UserServiceImplTest {
         assertNotNull(exception);
         verify(userRepository, never()).save(any(User.class));
     }
+
+    // --- Profile Tests ---
+
+    @Test
+    void shouldGetProfileSuccessfully() {
+        when(userRepository.findById(1L)).thenReturn(Optional.of(user));
+
+        UserResponse response = userService.getProfile(1L);
+
+        assertNotNull(response);
+        assertEquals(user.getId(), response.getId());
+        assertEquals(user.getFirstName(), response.getFirstName());
+        assertEquals(user.getLastName(), response.getLastName());
+    }
+
+    @Test
+    void shouldRejectGetProfileWhenUserNotFound() {
+        when(userRepository.findById(999L)).thenReturn(Optional.empty());
+
+        assertThrows(UsernameNotFoundException.class, () -> userService.getProfile(999L));
+    }
+
+    @Test
+    void shouldUpdateProfileSuccessfully() {
+        com.saif.contactmanagement.dto.request.UserProfileRequest request = 
+                new com.saif.contactmanagement.dto.request.UserProfileRequest("Jane", "Smith", "9876543210");
+        when(userRepository.findById(1L)).thenReturn(Optional.of(user));
+        when(userRepository.save(any(User.class))).thenReturn(user);
+
+        UserResponse response = userService.updateProfile(1L, request);
+
+        assertNotNull(response);
+        assertEquals("Jane", user.getFirstName());
+        assertEquals("Smith", user.getLastName());
+        assertEquals("9876543210", user.getPhoneNumber());
+    }
+
+    @Test
+    void shouldRejectUpdateProfileWhenUserNotFound() {
+        com.saif.contactmanagement.dto.request.UserProfileRequest request = 
+                new com.saif.contactmanagement.dto.request.UserProfileRequest("Jane", "Smith", "9876543210");
+        when(userRepository.findById(999L)).thenReturn(Optional.empty());
+
+        assertThrows(UsernameNotFoundException.class, () -> userService.updateProfile(999L, request));
+        verify(userRepository, never()).save(any(User.class));
+    }
 }

@@ -10,6 +10,8 @@ import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.security.authentication.BadCredentialsException;
 import org.springframework.stereotype.Service;
 
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.Pageable;
 import java.util.List;
 
 @Service
@@ -47,12 +49,12 @@ public class ContactServiceImpl implements ContactService {
     }
 
     @Override
-    public List<Contact> getAllContacts(Long userId) {
+    public Page<Contact> getAllContacts(Long userId, Pageable pageable) {
         User currentUser = getCurrentUser();
         if (!currentUser.getId().equals(userId)) {
             throw new ResourceNotFoundException("Contact not found");
         }
-        return contactRepository.findByUserId(userId);
+        return contactRepository.findByUserId(userId, pageable);
     }
 
     @Override
@@ -91,7 +93,7 @@ public class ContactServiceImpl implements ContactService {
     }
 
     @Override
-    public List<Contact> searchContacts(Long userId, String keyword) {
+    public Page<Contact> searchContacts(Long userId, String keyword, Pageable pageable) {
         User currentUser = getCurrentUser();
         if (!currentUser.getId().equals(userId)) {
             throw new ResourceNotFoundException("Contact not found");
@@ -101,7 +103,8 @@ public class ContactServiceImpl implements ContactService {
                         userId,
                         keyword,
                         userId,
-                        keyword
+                        keyword,
+                        pageable
                 );
     }
 }

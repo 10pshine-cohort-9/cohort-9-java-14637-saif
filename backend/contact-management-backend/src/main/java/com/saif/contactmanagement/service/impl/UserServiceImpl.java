@@ -119,4 +119,37 @@ public class UserServiceImpl implements UserService {
         user.setCredentialVersion(user.getCredentialVersion() + 1);
         userRepository.save(user);
     }
+
+    @Override
+    public UserResponse getProfile(Long userId) {
+        User user = userRepository.findById(userId)
+                .orElseThrow(() -> new UsernameNotFoundException("User not found"));
+        return new UserResponse(
+                user.getId(),
+                user.getFirstName(),
+                user.getLastName(),
+                user.getPhoneNumber(),
+                user.getEmail()
+        );
+    }
+
+    @Override
+    public UserResponse updateProfile(Long userId, com.saif.contactmanagement.dto.request.UserProfileRequest request) {
+        User user = userRepository.findById(userId)
+                .orElseThrow(() -> new UsernameNotFoundException("User not found"));
+
+        user.setFirstName(request.getFirstName());
+        user.setLastName(request.getLastName());
+        user.setPhoneNumber(request.getPhoneNumber());
+
+        User savedUser = userRepository.save(user);
+
+        return new UserResponse(
+                savedUser.getId(),
+                savedUser.getFirstName(),
+                savedUser.getLastName(),
+                savedUser.getPhoneNumber(),
+                savedUser.getEmail()
+        );
+    }
 }
