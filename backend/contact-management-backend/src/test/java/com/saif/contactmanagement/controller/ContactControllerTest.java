@@ -264,4 +264,58 @@ class ContactControllerTest {
 
         verify(contactService).searchContacts(1L, "John");
     }
+
+    @Test
+    void shouldThrowBadCredentialsWhenAuthenticationIsNull() throws Exception {
+        SecurityContext securityContext = mock(SecurityContext.class);
+        when(securityContext.getAuthentication()).thenReturn(null);
+        SecurityContextHolder.setContext(securityContext);
+
+        mockMvc.perform(get("/api/contacts"))
+                .andExpect(status().isUnauthorized());
+    }
+
+    @Test
+    void shouldThrowBadCredentialsWhenPrincipalIsInvalid() throws Exception {
+        Authentication authentication = mock(Authentication.class);
+        when(authentication.getPrincipal()).thenReturn("invalid");
+        SecurityContext securityContext = mock(SecurityContext.class);
+        when(securityContext.getAuthentication()).thenReturn(authentication);
+        SecurityContextHolder.setContext(securityContext);
+
+        mockMvc.perform(get("/api/contacts"))
+                .andExpect(status().isUnauthorized());
+    }
+
+    @Test
+    void shouldCreateContactWithDefaultFavoriteWhenNull() throws Exception {
+        ContactRequest reqWithNullFavorite = new ContactRequest(
+                "John", "Doe", "Manager", "john@example.com", "+1234567890",
+                "Company", "Address", "Notes", null
+        );
+
+        when(contactService.createContact(any(Contact.class))).thenReturn(contact);
+
+        mockMvc.perform(post("/api/contacts")
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content(objectMapper.writeValueAsString(reqWithNullFavorite)))
+                .andExpect(status().isCreated());
+    }
+
+    @Test
+    void shouldReturnResponseWhenContactHasNoUser() throws Exception {
+        Contact contactNoUser = Contact.builder()
+                .id(100L)
+                .firstName("John")
+                .lastName("Doe")
+                .user(null)
+                .build();
+
+        when(contactService.getContactById(100L)).thenReturn(contactNoUser);
+
+        mockMvc.perform(get("/api/contacts/100"))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.id").value(100L))
+                .andExpect(jsonPath("$.userId").value(org.hamcrest.Matchers.nullValue()));
+    }
 }

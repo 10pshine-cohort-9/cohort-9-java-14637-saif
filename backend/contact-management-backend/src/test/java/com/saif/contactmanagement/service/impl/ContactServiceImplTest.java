@@ -299,4 +299,25 @@ class ContactServiceImplTest {
         verify(contactRepository, never()).findByUserIdAndFirstNameContainingIgnoreCaseOrUserIdAndLastNameContainingIgnoreCase(
                 anyLong(), anyString(), anyLong(), anyString());
     }
+
+    @Test
+    void shouldThrowResourceNotFoundWhenContactHasNoUser() {
+        mockSecurityContext(currentUser);
+        Contact contactNoUser = Contact.builder().id(300L).user(null).build();
+        when(contactRepository.findById(300L)).thenReturn(Optional.of(contactNoUser));
+
+        assertThrows(ResourceNotFoundException.class, () -> contactService.getContactById(300L));
+    }
+
+    @Test
+    void shouldThrowBadCredentialsWhenAuthenticationIsNotAuthenticated() {
+        Authentication authentication = mock(Authentication.class);
+        when(authentication.isAuthenticated()).thenReturn(false);
+        SecurityContext securityContext = mock(SecurityContext.class);
+        when(securityContext.getAuthentication()).thenReturn(authentication);
+        SecurityContextHolder.setContext(securityContext);
+
+        Contact inputContact = Contact.builder().firstName("John").build();
+        assertThrows(BadCredentialsException.class, () -> contactService.createContact(inputContact));
+    }
 }
