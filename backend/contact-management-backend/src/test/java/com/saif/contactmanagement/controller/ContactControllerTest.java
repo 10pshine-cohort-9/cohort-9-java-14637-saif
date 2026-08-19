@@ -23,6 +23,10 @@ import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.test.web.servlet.MockMvc;
 import org.springframework.test.web.servlet.setup.MockMvcBuilders;
 
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.PageImpl;
+import org.springframework.data.domain.PageRequest;
+import org.springframework.data.domain.Pageable;
 import java.util.Collections;
 
 import static org.mockito.ArgumentMatchers.any;
@@ -148,14 +152,19 @@ class ContactControllerTest {
     @Test
     void shouldGetAllContactsSuccessfully() throws Exception {
         mockSecurityContext(currentUser);
-        when(contactService.getAllContacts(1L)).thenReturn(Collections.singletonList(contact));
+        Page<Contact> contactPage = new PageImpl<>(Collections.singletonList(contact), PageRequest.of(0, 10), 1);
+        when(contactService.getAllContacts(eq(1L), any(Pageable.class))).thenReturn(contactPage);
 
-        mockMvc.perform(get("/api/contacts"))
+        mockMvc.perform(get("/api/contacts")
+                        .param("page", "0")
+                        .param("size", "10")
+                        .param("sortBy", "firstName")
+                        .param("direction", "asc"))
                 .andExpect(status().isOk())
-                .andExpect(jsonPath("$[0].id").value(100L))
-                .andExpect(jsonPath("$[0].firstName").value("John"));
+                .andExpect(jsonPath("$.content[0].id").value(100L))
+                .andExpect(jsonPath("$.content[0].firstName").value("John"));
 
-        verify(contactService).getAllContacts(1L);
+        verify(contactService).getAllContacts(eq(1L), any(Pageable.class));
     }
 
     // --- Get Contact By ID Tests ---
@@ -255,14 +264,20 @@ class ContactControllerTest {
     @Test
     void shouldSearchContactsSuccessfully() throws Exception {
         mockSecurityContext(currentUser);
-        when(contactService.searchContacts(1L, "John")).thenReturn(Collections.singletonList(contact));
+        Page<Contact> contactPage = new PageImpl<>(Collections.singletonList(contact), PageRequest.of(0, 10), 1);
+        when(contactService.searchContacts(eq(1L), eq("John"), any(Pageable.class))).thenReturn(contactPage);
 
-        mockMvc.perform(get("/api/contacts/search").param("keyword", "John"))
+        mockMvc.perform(get("/api/contacts/search")
+                        .param("keyword", "John")
+                        .param("page", "0")
+                        .param("size", "10")
+                        .param("sortBy", "firstName")
+                        .param("direction", "asc"))
                 .andExpect(status().isOk())
-                .andExpect(jsonPath("$[0].id").value(100L))
-                .andExpect(jsonPath("$[0].firstName").value("John"));
+                .andExpect(jsonPath("$.content[0].id").value(100L))
+                .andExpect(jsonPath("$.content[0].firstName").value("John"));
 
-        verify(contactService).searchContacts(1L, "John");
+        verify(contactService).searchContacts(eq(1L), eq("John"), any(Pageable.class));
     }
 
     @Test
@@ -317,5 +332,38 @@ class ContactControllerTest {
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$.id").value(100L))
                 .andExpect(jsonPath("$.userId").value(org.hamcrest.Matchers.nullValue()));
+    }
+
+    @Test
+    void shouldGetAllContactsSortedDescending() throws Exception {
+        mockSecurityContext(currentUser);
+        Page<Contact> contactPage = new PageImpl<>(Collections.singletonList(contact), PageRequest.of(0, 10), 1);
+        when(contactService.getAllContacts(eq(1L), any(Pageable.class))).thenReturn(contactPage);
+
+        mockMvc.perform(get("/api/contacts")
+                        .param("page", "0")
+                        .param("size", "10")
+                        .param("sortBy", "firstName")
+                        .param("direction", "desc"))
+                .andExpect(status().isOk());
+
+        verify(contactService).getAllContacts(eq(1L), any(Pageable.class));
+    }
+
+    @Test
+    void shouldSearchContactsSortedDescending() throws Exception {
+        mockSecurityContext(currentUser);
+        Page<Contact> contactPage = new PageImpl<>(Collections.singletonList(contact), PageRequest.of(0, 10), 1);
+        when(contactService.searchContacts(eq(1L), eq("John"), any(Pageable.class))).thenReturn(contactPage);
+
+        mockMvc.perform(get("/api/contacts/search")
+                        .param("keyword", "John")
+                        .param("page", "0")
+                        .param("size", "10")
+                        .param("sortBy", "firstName")
+                        .param("direction", "desc"))
+                .andExpect(status().isOk());
+
+        verify(contactService).searchContacts(eq(1L), eq("John"), any(Pageable.class));
     }
 }
