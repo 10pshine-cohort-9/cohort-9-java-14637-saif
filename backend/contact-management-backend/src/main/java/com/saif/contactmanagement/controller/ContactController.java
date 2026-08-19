@@ -84,7 +84,8 @@ public class ContactController {
     ) {
         Long userId = getCurrentUserId();
         Sort sort = direction.equalsIgnoreCase("desc") ? Sort.by(sortBy).descending() : Sort.by(sortBy).ascending();
-        Pageable pageable = PageRequest.of(page, size, sort);
+        int limitSize = Math.min(size, 10);
+        Pageable pageable = PageRequest.of(page, limitSize, sort);
         Page<Contact> contactsPage = contactService.getAllContacts(userId, pageable);
         return contactsPage.map(this::toResponse);
     }
@@ -118,7 +119,8 @@ public class ContactController {
     ) {
         Long userId = getCurrentUserId();
         Sort sort = direction.equalsIgnoreCase("desc") ? Sort.by(sortBy).descending() : Sort.by(sortBy).ascending();
-        Pageable pageable = PageRequest.of(page, size, sort);
+        int limitSize = Math.min(size, 10);
+        Pageable pageable = PageRequest.of(page, limitSize, sort);
         Page<Contact> contactsPage = contactService.searchContacts(userId, keyword, pageable);
         return contactsPage.map(this::toResponse);
     }
