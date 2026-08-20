@@ -41,3 +41,4 @@ public class User {
     private List<Contact> contacts;
 
 }
+
