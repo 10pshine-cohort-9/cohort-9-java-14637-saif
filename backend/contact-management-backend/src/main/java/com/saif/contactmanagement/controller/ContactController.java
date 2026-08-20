@@ -21,6 +21,9 @@ import java.util.Map;
 import java.util.List;
 import java.util.stream.Collectors;
 
+import lombok.extern.slf4j.Slf4j;
+
+@Slf4j
 @RestController
 @RequestMapping("/api/contacts")
 public class ContactController {
@@ -92,6 +95,7 @@ public class ContactController {
     @PostMapping
     @ResponseStatus(HttpStatus.CREATED)
     public ContactResponse createContact(@Valid @RequestBody ContactRequest request) {
+        log.info("Creating contact: {} {}", request.getFirstName(), request.getLastName());
         Contact contact = toEntity(request);
         Contact savedContact = contactService.createContact(contact);
         return toResponse(savedContact);
@@ -105,8 +109,9 @@ public class ContactController {
             @RequestParam(defaultValue = "asc") String direction
     ) {
         Long userId = getCurrentUserId();
-        Sort sort = direction.equalsIgnoreCase("desc") ? Sort.by(sortBy).descending() : Sort.by(sortBy).ascending();
         int limitSize = Math.min(size, 10);
+        log.info("Fetching contacts for user ID: {}, page: {}, size: {}", userId, page, limitSize);
+        Sort sort = direction.equalsIgnoreCase("desc") ? Sort.by(sortBy).descending() : Sort.by(sortBy).ascending();
         Pageable pageable = PageRequest.of(page, limitSize, sort);
         Page<Contact> contactsPage = contactService.getAllContacts(userId, pageable);
         return contactsPage.map(this::toResponse);
@@ -114,12 +119,14 @@ public class ContactController {
 
     @GetMapping("/{id}")
     public ContactResponse getContactById(@PathVariable Long id) {
+        log.info("Fetching contact ID: {}", id);
         Contact contact = contactService.getContactById(id);
         return toResponse(contact);
     }
 
     @PutMapping("/{id}")
     public ContactResponse updateContact(@PathVariable Long id, @Valid @RequestBody ContactRequest request) {
+        log.info("Updating contact ID: {}", id);
         Contact contactDetails = toEntity(request);
         Contact updatedContact = contactService.updateContact(id, contactDetails);
         return toResponse(updatedContact);
@@ -128,6 +135,7 @@ public class ContactController {
     @DeleteMapping("/{id}")
     @ResponseStatus(HttpStatus.NO_CONTENT)
     public void deleteContact(@PathVariable Long id) {
+        log.info("Deleting contact ID: {}", id);
         contactService.deleteContact(id);
     }
 
@@ -140,8 +148,9 @@ public class ContactController {
             @RequestParam(defaultValue = "asc") String direction
     ) {
         Long userId = getCurrentUserId();
-        Sort sort = direction.equalsIgnoreCase("desc") ? Sort.by(sortBy).descending() : Sort.by(sortBy).ascending();
         int limitSize = Math.min(size, 10);
+        log.info("Searching contacts with keyword '{}' for user ID: {}, page: {}, size: {}", keyword, userId, page, limitSize);
+        Sort sort = direction.equalsIgnoreCase("desc") ? Sort.by(sortBy).descending() : Sort.by(sortBy).ascending();
         Pageable pageable = PageRequest.of(page, limitSize, sort);
         Page<Contact> contactsPage = contactService.searchContacts(userId, keyword, pageable);
         return contactsPage.map(this::toResponse);

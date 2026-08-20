@@ -12,6 +12,9 @@ import org.springframework.security.core.Authentication;
 import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.web.bind.annotation.*;
 
+import lombok.extern.slf4j.Slf4j;
+
+@Slf4j
 @RestController
 @RequestMapping("/api/users")
 public class UserController {
@@ -33,12 +36,14 @@ public class UserController {
     @GetMapping("/profile")
     public UserResponse getProfile() {
         Long userId = getCurrentUserId();
+        log.info("Fetching profile details for user ID: {}", userId);
         return userService.getProfile(userId);
     }
 
     @PutMapping("/profile")
     public UserResponse updateProfile(@Valid @RequestBody UserProfileRequest request) {
         Long userId = getCurrentUserId();
+        log.info("Updating profile details for user ID: {}", userId);
         return userService.updateProfile(userId, request);
     }
 
@@ -46,6 +51,7 @@ public class UserController {
     @ResponseStatus(HttpStatus.OK)
     public void changePassword(@Valid @RequestBody ChangePasswordRequest request) {
         Long userId = getCurrentUserId();
+        log.info("Changing password for user ID: {}", userId);
         userService.changePassword(userId, request.getOldPassword(), request.getNewPassword());
     }
 }
