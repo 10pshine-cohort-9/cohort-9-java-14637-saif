@@ -5,6 +5,7 @@ import com.saif.contactmanagement.entity.User;
 import com.saif.contactmanagement.exception.ResourceNotFoundException;
 import com.saif.contactmanagement.repository.ContactRepository;
 import com.saif.contactmanagement.service.ContactService;
+
 import org.springframework.security.core.Authentication;
 import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.security.authentication.BadCredentialsException;
@@ -12,10 +13,11 @@ import org.springframework.stereotype.Service;
 
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
-import java.util.List;
 
 @Service
 public class ContactServiceImpl implements ContactService {
+
+    private static final String CONTACT_NOT_FOUND = "Contact not found";
 
     private final ContactRepository contactRepository;
 
@@ -29,8 +31,8 @@ public class ContactServiceImpl implements ContactService {
             throw new BadCredentialsException("User not authenticated");
         }
         Object principal = authentication.getPrincipal();
-        if (principal instanceof CustomUserDetails) {
-            return ((CustomUserDetails) principal).getUser();
+        if (principal instanceof CustomUserDetails customUserDetails) {
+            return customUserDetails.getUser();
         }
         throw new BadCredentialsException("Invalid user details");
     }
@@ -38,7 +40,7 @@ public class ContactServiceImpl implements ContactService {
     private void validateOwnership(Contact contact) {
         User currentUser = getCurrentUser();
         if (contact.getUser() == null || !contact.getUser().getId().equals(currentUser.getId())) {
-            throw new ResourceNotFoundException("Contact not found");
+            throw new ResourceNotFoundException(CONTACT_NOT_FOUND);
         }
     }
 
@@ -52,7 +54,7 @@ public class ContactServiceImpl implements ContactService {
     public Page<Contact> getAllContacts(Long userId, Pageable pageable) {
         User currentUser = getCurrentUser();
         if (!currentUser.getId().equals(userId)) {
-            throw new ResourceNotFoundException("Contact not found");
+            throw new ResourceNotFoundException(CONTACT_NOT_FOUND);
         }
         return contactRepository.findByUserId(userId, pageable);
     }
@@ -60,7 +62,7 @@ public class ContactServiceImpl implements ContactService {
     @Override
     public Contact getContactById(Long id) {
         Contact contact = contactRepository.findById(id)
-                .orElseThrow(() -> new ResourceNotFoundException("Contact not found"));
+                .orElseThrow(() -> new ResourceNotFoundException(CONTACT_NOT_FOUND));
         validateOwnership(contact);
         return contact;
     }
@@ -68,7 +70,7 @@ public class ContactServiceImpl implements ContactService {
     @Override
     public Contact updateContact(Long id, Contact contact) {
         Contact existingContact = contactRepository.findById(id)
-                .orElseThrow(() -> new ResourceNotFoundException("Contact not found"));
+                .orElseThrow(() -> new ResourceNotFoundException(CONTACT_NOT_FOUND));
         validateOwnership(existingContact);
 
         existingContact.setFirstName(contact.getFirstName());
@@ -96,7 +98,7 @@ public class ContactServiceImpl implements ContactService {
     @Override
     public void deleteContact(Long id) {
         Contact contact = contactRepository.findById(id)
-                .orElseThrow(() -> new ResourceNotFoundException("Contact not found"));
+                .orElseThrow(() -> new ResourceNotFoundException(CONTACT_NOT_FOUND));
         validateOwnership(contact);
         contactRepository.delete(contact);
     }
@@ -105,7 +107,7 @@ public class ContactServiceImpl implements ContactService {
     public Page<Contact> searchContacts(Long userId, String keyword, Pageable pageable) {
         User currentUser = getCurrentUser();
         if (!currentUser.getId().equals(userId)) {
-            throw new ResourceNotFoundException("Contact not found");
+            throw new ResourceNotFoundException(CONTACT_NOT_FOUND);
         }
         return contactRepository
                 .findByUserIdAndFirstNameContainingIgnoreCaseOrUserIdAndLastNameContainingIgnoreCase(
