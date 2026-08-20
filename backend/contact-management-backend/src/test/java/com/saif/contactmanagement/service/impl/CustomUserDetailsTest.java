@@ -9,6 +9,7 @@ import java.util.Collection;
 
 import static org.junit.jupiter.api.Assertions.*;
 
+@SuppressWarnings("unused")
 class CustomUserDetailsTest {
 
     private User user;

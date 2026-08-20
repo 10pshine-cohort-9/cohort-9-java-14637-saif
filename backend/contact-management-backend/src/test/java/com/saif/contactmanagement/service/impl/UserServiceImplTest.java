@@ -29,6 +29,7 @@ import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.Mockito.*;
 
 @ExtendWith(MockitoExtension.class)
+@SuppressWarnings("ResultOfMethodCallIgnored")
 class UserServiceImplTest {
 
     private static final String USER_EMAIL = "john.doe@example.com";
