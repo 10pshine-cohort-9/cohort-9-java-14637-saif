@@ -334,8 +334,8 @@ class ContactServiceImplTest {
         when(securityContext.getAuthentication()).thenReturn(authentication);
         SecurityContextHolder.setContext(securityContext);
 
-        Contact inputContact = Contact.builder().firstName("John").build();
-        assertThrowsWithCheck(BadCredentialsException.class, () -> contactService.createContact(inputContact));
+        Contact unauthenticatedContact = Contact.builder().firstName("John").build();
+        assertThrowsWithCheck(BadCredentialsException.class, () -> contactService.createContact(unauthenticatedContact));
     }
 
     @Test
