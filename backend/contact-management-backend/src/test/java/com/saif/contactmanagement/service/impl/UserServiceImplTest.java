@@ -210,7 +210,8 @@ class UserServiceImplTest {
     void shouldRejectGetProfileWhenUserNotFound() {
         when(userRepository.findById(999L)).thenReturn(Optional.empty());
 
-        assertThrows(UsernameNotFoundException.class, () -> userService.getProfile(999L));
+        Throwable exception = assertThrows(UsernameNotFoundException.class, () -> userService.getProfile(999L));
+        assertNotNull(exception);
     }
 
     @Test
@@ -234,7 +235,8 @@ class UserServiceImplTest {
                 new com.saif.contactmanagement.dto.request.UserProfileRequest("Jane", "Smith", "9876543210");
         when(userRepository.findById(999L)).thenReturn(Optional.empty());
 
-        assertThrows(UsernameNotFoundException.class, () -> userService.updateProfile(999L, request));
+        Throwable exception = assertThrows(UsernameNotFoundException.class, () -> userService.updateProfile(999L, request));
+        assertNotNull(exception);
         verify(userRepository, never()).save(any(User.class));
     }
 }

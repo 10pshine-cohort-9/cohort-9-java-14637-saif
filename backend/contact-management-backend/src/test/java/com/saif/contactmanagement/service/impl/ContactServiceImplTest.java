@@ -43,6 +43,11 @@ class ContactServiceImplTest {
     private User otherUser;
     private Contact contact;
 
+    private void assertThrowsWithCheck(Class<? extends Throwable> expectedType, org.junit.jupiter.api.function.Executable executable) {
+        Throwable exception = assertThrows(expectedType, executable);
+        assertNotNull(exception);
+    }
+
     @BeforeEach
     void setUp() {
         currentUser = User.builder()
@@ -126,7 +131,7 @@ class ContactServiceImplTest {
         mockUnauthenticatedSecurityContext();
         Contact inputContact = Contact.builder().firstName("John").build();
 
-        assertThrows(BadCredentialsException.class, () -> contactService.createContact(inputContact));
+        assertThrowsWithCheck(BadCredentialsException.class, () -> contactService.createContact(inputContact));
         verify(contactRepository, never()).save(any(Contact.class));
     }
 
@@ -135,7 +140,7 @@ class ContactServiceImplTest {
         mockInvalidPrincipalSecurityContext();
         Contact inputContact = Contact.builder().firstName("John").build();
 
-        assertThrows(BadCredentialsException.class, () -> contactService.createContact(inputContact));
+        assertThrowsWithCheck(BadCredentialsException.class, () -> contactService.createContact(inputContact));
         verify(contactRepository, never()).save(any(Contact.class));
     }
 
@@ -160,7 +165,7 @@ class ContactServiceImplTest {
         mockSecurityContext(currentUser);
         Pageable pageable = PageRequest.of(0, 10);
 
-        assertThrows(ResourceNotFoundException.class, () -> contactService.getAllContacts(2L, pageable));
+        assertThrowsWithCheck(ResourceNotFoundException.class, () -> contactService.getAllContacts(2L, pageable));
         verify(contactRepository, never()).findByUserId(anyLong(), any(Pageable.class));
     }
 
@@ -181,7 +186,7 @@ class ContactServiceImplTest {
     void shouldThrowResourceNotFoundWhenContactDoesNotExist() {
         when(contactRepository.findById(999L)).thenReturn(Optional.empty());
 
-        assertThrows(ResourceNotFoundException.class, () -> contactService.getContactById(999L));
+        assertThrowsWithCheck(ResourceNotFoundException.class, () -> contactService.getContactById(999L));
     }
 
     @Test
@@ -193,7 +198,7 @@ class ContactServiceImplTest {
                 .build();
         when(contactRepository.findById(200L)).thenReturn(Optional.of(otherContact));
 
-        assertThrows(ResourceNotFoundException.class, () -> contactService.getContactById(200L));
+        assertThrowsWithCheck(ResourceNotFoundException.class, () -> contactService.getContactById(200L));
     }
 
     // --- Update Contact Tests ---
@@ -236,7 +241,7 @@ class ContactServiceImplTest {
 
         Contact updatedInfo = Contact.builder().firstName("Jane").build();
 
-        assertThrows(ResourceNotFoundException.class, () -> contactService.updateContact(999L, updatedInfo));
+        assertThrowsWithCheck(ResourceNotFoundException.class, () -> contactService.updateContact(999L, updatedInfo));
     }
 
     @Test
@@ -250,7 +255,7 @@ class ContactServiceImplTest {
 
         Contact updatedInfo = Contact.builder().firstName("Jane").build();
 
-        assertThrows(ResourceNotFoundException.class, () -> contactService.updateContact(200L, updatedInfo));
+        assertThrowsWithCheck(ResourceNotFoundException.class, () -> contactService.updateContact(200L, updatedInfo));
     }
 
     // --- Delete Contact Tests ---
@@ -268,7 +273,7 @@ class ContactServiceImplTest {
     void shouldThrowResourceNotFoundWhenDeletingNonExistentContact() {
         when(contactRepository.findById(999L)).thenReturn(Optional.empty());
 
-        assertThrows(ResourceNotFoundException.class, () -> contactService.deleteContact(999L));
+        assertThrowsWithCheck(ResourceNotFoundException.class, () -> contactService.deleteContact(999L));
         verify(contactRepository, never()).delete(any(Contact.class));
     }
 
@@ -281,7 +286,7 @@ class ContactServiceImplTest {
                 .build();
         when(contactRepository.findById(200L)).thenReturn(Optional.of(otherContact));
 
-        assertThrows(ResourceNotFoundException.class, () -> contactService.deleteContact(200L));
+        assertThrowsWithCheck(ResourceNotFoundException.class, () -> contactService.deleteContact(200L));
         verify(contactRepository, never()).delete(any(Contact.class));
     }
 
@@ -307,7 +312,7 @@ class ContactServiceImplTest {
         mockSecurityContext(currentUser);
         Pageable pageable = PageRequest.of(0, 10);
 
-        assertThrows(ResourceNotFoundException.class, () -> contactService.searchContacts(2L, "keyword", pageable));
+        assertThrowsWithCheck(ResourceNotFoundException.class, () -> contactService.searchContacts(2L, "keyword", pageable));
         verify(contactRepository, never()).findByUserIdAndFirstNameContainingIgnoreCaseOrUserIdAndLastNameContainingIgnoreCase(
                 anyLong(), anyString(), anyLong(), anyString(), any(Pageable.class));
     }
@@ -318,7 +323,7 @@ class ContactServiceImplTest {
         Contact contactNoUser = Contact.builder().id(300L).user(null).build();
         when(contactRepository.findById(300L)).thenReturn(Optional.of(contactNoUser));
 
-        assertThrows(ResourceNotFoundException.class, () -> contactService.getContactById(300L));
+        assertThrowsWithCheck(ResourceNotFoundException.class, () -> contactService.getContactById(300L));
     }
 
     @Test
@@ -330,7 +335,7 @@ class ContactServiceImplTest {
         SecurityContextHolder.setContext(securityContext);
 
         Contact inputContact = Contact.builder().firstName("John").build();
-        assertThrows(BadCredentialsException.class, () -> contactService.createContact(inputContact));
+        assertThrowsWithCheck(BadCredentialsException.class, () -> contactService.createContact(inputContact));
     }
 
     @Test
