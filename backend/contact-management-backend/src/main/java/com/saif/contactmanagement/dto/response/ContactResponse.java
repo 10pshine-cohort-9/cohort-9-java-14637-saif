@@ -5,6 +5,7 @@ import lombok.Builder;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
 import lombok.Setter;
+import java.util.Map;
 
 @Getter
 @Setter
@@ -24,4 +25,7 @@ public class ContactResponse {
     private String notes;
     private Boolean favorite;
     private Long userId;
+
+    private Map<String, String> emails;
+    private Map<String, String> phoneNumbers;
 }

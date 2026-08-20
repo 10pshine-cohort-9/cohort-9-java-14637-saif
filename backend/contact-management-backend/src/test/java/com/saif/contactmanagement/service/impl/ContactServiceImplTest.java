@@ -21,7 +21,9 @@ import org.springframework.data.domain.PageImpl;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Pageable;
 import java.util.Collections;
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 import java.util.Optional;
 
 import static org.junit.jupiter.api.Assertions.*;
@@ -329,5 +331,39 @@ class ContactServiceImplTest {
 
         Contact inputContact = Contact.builder().firstName("John").build();
         assertThrows(BadCredentialsException.class, () -> contactService.createContact(inputContact));
+    }
+
+    @Test
+    void shouldUpdateContactWithEmailsAndPhoneNumbersMapsSuccessfully() {
+        mockSecurityContext(currentUser);
+        when(contactRepository.findById(100L)).thenReturn(Optional.of(contact));
+        when(contactRepository.save(any(Contact.class))).thenReturn(contact);
+
+        Map<String, String> emails = new HashMap<>();
+        emails.put("work", "work@example.com");
+        emails.put("personal", "personal@example.com");
+
+        Map<String, String> phoneNumbers = new HashMap<>();
+        phoneNumbers.put("work", "+111222333");
+        phoneNumbers.put("home", "+444555666");
+
+        Contact updatedInfo = Contact.builder()
+                .firstName("Jane")
+                .lastName("Smith")
+                .emails(emails)
+                .phoneNumbers(phoneNumbers)
+                .build();
+
+        Contact result = contactService.updateContact(100L, updatedInfo);
+
+        assertNotNull(result);
+        assertEquals("Jane", contact.getFirstName());
+        assertEquals("Smith", contact.getLastName());
+        assertEquals(2, contact.getEmails().size());
+        assertEquals("work@example.com", contact.getEmails().get("work"));
+        assertEquals("personal@example.com", contact.getEmails().get("personal"));
+        assertEquals(2, contact.getPhoneNumbers().size());
+        assertEquals("+111222333", contact.getPhoneNumbers().get("work"));
+        assertEquals("+444555666", contact.getPhoneNumbers().get("home"));
     }
 }

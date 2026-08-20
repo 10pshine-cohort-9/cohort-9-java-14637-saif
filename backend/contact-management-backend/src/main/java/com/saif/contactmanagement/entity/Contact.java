@@ -2,6 +2,8 @@ package com.saif.contactmanagement.entity;
 
 import jakarta.persistence.*;
 import lombok.*;
+import java.util.HashMap;
+import java.util.Map;
 
 
 
@@ -33,6 +35,20 @@ public class Contact {
     private String address;
     private String notes;
     private Boolean favorite;
+
+    @ElementCollection(fetch = FetchType.EAGER)
+    @CollectionTable(name = "contact_emails", joinColumns = @JoinColumn(name = "contact_id"))
+    @MapKeyColumn(name = "label")
+    @Column(name = "email")
+    @Builder.Default
+    private Map<String, String> emails = new HashMap<>();
+
+    @ElementCollection(fetch = FetchType.EAGER)
+    @CollectionTable(name = "contact_phone_numbers", joinColumns = @JoinColumn(name = "contact_id"))
+    @MapKeyColumn(name = "label")
+    @Column(name = "phone_number")
+    @Builder.Default
+    private Map<String, String> phoneNumbers = new HashMap<>();
 
 
 

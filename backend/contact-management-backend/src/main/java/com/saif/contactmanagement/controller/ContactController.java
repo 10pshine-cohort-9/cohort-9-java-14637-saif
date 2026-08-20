@@ -16,6 +16,8 @@ import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.domain.Sort;
+import java.util.HashMap;
+import java.util.Map;
 import java.util.List;
 import java.util.stream.Collectors;
 
@@ -38,6 +40,22 @@ public class ContactController {
     }
 
     private Contact toEntity(ContactRequest request) {
+        Map<String, String> requestEmails = request.getEmails();
+        if (requestEmails == null) {
+            requestEmails = new HashMap<>();
+        }
+        if (request.getEmail() != null && !request.getEmail().isBlank() && !requestEmails.containsValue(request.getEmail())) {
+            requestEmails.put("primary", request.getEmail());
+        }
+
+        Map<String, String> requestPhoneNumbers = request.getPhoneNumbers();
+        if (requestPhoneNumbers == null) {
+            requestPhoneNumbers = new HashMap<>();
+        }
+        if (request.getPhoneNumber() != null && !request.getPhoneNumber().isBlank() && !requestPhoneNumbers.containsValue(request.getPhoneNumber())) {
+            requestPhoneNumbers.put("primary", request.getPhoneNumber());
+        }
+
         return Contact.builder()
                 .firstName(request.getFirstName())
                 .lastName(request.getLastName())
@@ -48,6 +66,8 @@ public class ContactController {
                 .address(request.getAddress())
                 .notes(request.getNotes())
                 .favorite(request.getFavorite() != null ? request.getFavorite() : false)
+                .emails(requestEmails)
+                .phoneNumbers(requestPhoneNumbers)
                 .build();
     }
 
@@ -64,6 +84,8 @@ public class ContactController {
                 .notes(contact.getNotes())
                 .favorite(contact.getFavorite())
                 .userId(contact.getUser() != null ? contact.getUser().getId() : null)
+                .emails(contact.getEmails())
+                .phoneNumbers(contact.getPhoneNumbers())
                 .build();
     }
 
