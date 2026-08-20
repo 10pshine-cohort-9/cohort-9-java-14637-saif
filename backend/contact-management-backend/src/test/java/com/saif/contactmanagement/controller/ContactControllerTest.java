@@ -2,7 +2,6 @@ package com.saif.contactmanagement.controller;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.saif.contactmanagement.dto.request.ContactRequest;
-import com.saif.contactmanagement.dto.response.ContactResponse;
 import com.saif.contactmanagement.entity.Contact;
 import com.saif.contactmanagement.entity.User;
 import com.saif.contactmanagement.exception.GlobalExceptionHandler;

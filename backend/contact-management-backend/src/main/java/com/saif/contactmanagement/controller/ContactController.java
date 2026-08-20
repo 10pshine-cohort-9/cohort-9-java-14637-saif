@@ -18,9 +18,6 @@ import org.springframework.data.domain.Pageable;
 import org.springframework.data.domain.Sort;
 import java.util.HashMap;
 import java.util.Map;
-import java.util.List;
-import java.util.stream.Collectors;
-
 import lombok.extern.slf4j.Slf4j;
 
 @Slf4j
@@ -68,7 +65,7 @@ public class ContactController {
                 .company(request.getCompany())
                 .address(request.getAddress())
                 .notes(request.getNotes())
-                .favorite(request.getFavorite() != null ? request.getFavorite() : false)
+                .favorite(Boolean.TRUE.equals(request.getFavorite()))
                 .emails(requestEmails)
                 .phoneNumbers(requestPhoneNumbers)
                 .build();
