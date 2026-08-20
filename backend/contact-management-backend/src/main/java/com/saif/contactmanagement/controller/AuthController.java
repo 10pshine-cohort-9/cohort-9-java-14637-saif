@@ -15,6 +15,9 @@ import org.springframework.web.bind.annotation.ResponseStatus;
 import com.saif.contactmanagement.dto.request.LoginRequest;
 import com.saif.contactmanagement.dto.response.LoginResponse;
 
+import lombok.extern.slf4j.Slf4j;
+
+@Slf4j
 @RestController
 @RequestMapping("/api/auth")
 public class AuthController {
@@ -28,12 +31,14 @@ public class AuthController {
     @PostMapping("/register")
     @ResponseStatus(HttpStatus.CREATED)
     public UserResponse register(@Valid @RequestBody UserRegistrationRequest request) {
+        log.info("Received registration request for email: {}", request.getEmail());
         return userService.register(request);
     }
 
     @PostMapping("/login")
     @ResponseStatus(HttpStatus.OK)
     public LoginResponse login(@Valid @RequestBody LoginRequest request) {
+        log.info("Received login request for email: {}", request.getEmail());
         return userService.login(request);
     }
 
