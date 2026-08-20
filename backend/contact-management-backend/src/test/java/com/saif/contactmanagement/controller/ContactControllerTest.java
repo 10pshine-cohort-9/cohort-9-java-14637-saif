@@ -28,6 +28,8 @@ import org.springframework.data.domain.PageImpl;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Pageable;
 import java.util.Collections;
+import java.util.HashMap;
+import java.util.Map;
 
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.eq;
@@ -398,5 +400,44 @@ class ContactControllerTest {
         org.mockito.ArgumentCaptor<Pageable> pageableCaptor = org.mockito.ArgumentCaptor.forClass(Pageable.class);
         verify(contactService).searchContacts(eq(1L), eq("John"), pageableCaptor.capture());
         org.junit.jupiter.api.Assertions.assertEquals(10, pageableCaptor.getValue().getPageSize());
+    }
+
+    @Test
+    void shouldCreateContactWithEmailsAndPhoneNumbersMapsSuccessfully() throws Exception {
+        Map<String, String> emails = new HashMap<>();
+        emails.put("work", "work@example.com");
+        emails.put("personal", "personal@example.com");
+
+        Map<String, String> phoneNumbers = new HashMap<>();
+        phoneNumbers.put("work", "+111222333");
+        phoneNumbers.put("home", "+444555666");
+
+        ContactRequest request = new ContactRequest();
+        request.setFirstName("John");
+        request.setLastName("Doe");
+        request.setEmails(emails);
+        request.setPhoneNumbers(phoneNumbers);
+
+        Contact savedContact = Contact.builder()
+                .id(100L)
+                .firstName("John")
+                .lastName("Doe")
+                .emails(emails)
+                .phoneNumbers(phoneNumbers)
+                .user(currentUser)
+                .favorite(false)
+                .build();
+
+        when(contactService.createContact(any(Contact.class))).thenReturn(savedContact);
+
+        mockMvc.perform(post("/api/contacts")
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content(objectMapper.writeValueAsString(request)))
+                .andExpect(status().isCreated())
+                .andExpect(jsonPath("$.firstName").value("John"))
+                .andExpect(jsonPath("$.emails.work").value("work@example.com"))
+                .andExpect(jsonPath("$.emails.personal").value("personal@example.com"))
+                .andExpect(jsonPath("$.phoneNumbers.work").value("+111222333"))
+                .andExpect(jsonPath("$.phoneNumbers.home").value("+444555666"));
     }
 }

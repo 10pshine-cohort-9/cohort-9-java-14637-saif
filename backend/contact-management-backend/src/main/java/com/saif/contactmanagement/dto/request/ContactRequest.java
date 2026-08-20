@@ -8,6 +8,7 @@ import lombok.AllArgsConstructor;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
 import lombok.Setter;
+import java.util.Map;
 
 @Getter
 @Setter
@@ -45,4 +46,19 @@ public class ContactRequest {
     private String notes;
 
     private Boolean favorite;
+
+    private Map<String, String> emails;
+    private Map<String, String> phoneNumbers;
+
+    public ContactRequest(String firstName, String lastName, String title, String email, String phoneNumber, String company, String address, String notes, Boolean favorite) {
+        this.firstName = firstName;
+        this.lastName = lastName;
+        this.title = title;
+        this.email = email;
+        this.phoneNumber = phoneNumber;
+        this.company = company;
+        this.address = address;
+        this.notes = notes;
+        this.favorite = favorite;
+    }
 }

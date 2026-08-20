@@ -81,6 +81,15 @@ public class ContactServiceImpl implements ContactService {
         existingContact.setNotes(contact.getNotes());
         existingContact.setFavorite(contact.getFavorite());
 
+        existingContact.getEmails().clear();
+        if (contact.getEmails() != null) {
+            existingContact.getEmails().putAll(contact.getEmails());
+        }
+        existingContact.getPhoneNumbers().clear();
+        if (contact.getPhoneNumbers() != null) {
+            existingContact.getPhoneNumbers().putAll(contact.getPhoneNumbers());
+        }
+
         return contactRepository.save(existingContact);
     }
 
