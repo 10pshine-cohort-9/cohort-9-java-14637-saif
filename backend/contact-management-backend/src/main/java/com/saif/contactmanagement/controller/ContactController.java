@@ -28,10 +28,16 @@ public class ContactController {
 
     private final ContactService contactService;
     private final CurrentUserProvider currentUserProvider;
+    private final jakarta.servlet.http.HttpServletRequest httpServletRequest;
 
-    public ContactController(ContactService contactService, CurrentUserProvider currentUserProvider) {
+    private static final java.util.Set<String> ALLOWED_SORT_PROPERTIES = java.util.Set.of(
+            "id", "firstName", "lastName", "title", "email", "phoneNumber", "company", "address", "notes", "favorite"
+    );
+
+    public ContactController(ContactService contactService, CurrentUserProvider currentUserProvider, jakarta.servlet.http.HttpServletRequest httpServletRequest) {
         this.contactService = contactService;
         this.currentUserProvider = currentUserProvider;
+        this.httpServletRequest = httpServletRequest;
     }
 
     private Contact toEntity(ContactRequest request) {
@@ -93,6 +99,29 @@ public class ContactController {
         return toResponse(savedContact);
     }
 
+    private void validatePaginationAndSorting(int page, int size, String sortBy) {
+        if (page < 0) {
+            throw new org.springframework.web.server.ResponseStatusException(
+                    HttpStatus.BAD_REQUEST, "Page index must not be less than zero");
+        }
+        if (size <= 0) {
+            throw new org.springframework.web.server.ResponseStatusException(
+                    HttpStatus.BAD_REQUEST, "Page size must be greater than zero");
+        }
+        if (!ALLOWED_SORT_PROPERTIES.contains(sortBy)) {
+            throw new org.springframework.web.server.ResponseStatusException(
+                    HttpStatus.BAD_REQUEST, "Sort property '" + sortBy + "' is not supported");
+        }
+    }
+
+    private String getCorrelationId() {
+        String correlationId = httpServletRequest.getHeader("X-Correlation-ID");
+        if (correlationId == null) {
+            correlationId = httpServletRequest.getHeader("X-Request-ID");
+        }
+        return correlationId != null ? correlationId : "N/A";
+    }
+
     @GetMapping
     public Page<ContactResponse> getAllContacts(
             @RequestParam(defaultValue = "0") int page,
@@ -100,9 +129,9 @@ public class ContactController {
             @RequestParam(defaultValue = "firstName") String sortBy,
             @RequestParam(defaultValue = "asc") String direction
     ) {
-        Long userId = currentUserProvider.getCurrentUserId();
+        validatePaginationAndSorting(page, size, sortBy);
         int limitSize = Math.min(size, 10);
-        log.info("Fetching contacts for user ID: {}, page: {}, size: {}", userId, page, limitSize);
+        log.info("Fetching contacts, correlationId: {}, page: {}, size: {}", getCorrelationId(), page, limitSize);
         Sort sort = direction.equalsIgnoreCase("desc") ? Sort.by(sortBy).descending() : Sort.by(sortBy).ascending();
         Pageable pageable = PageRequest.of(page, limitSize, sort);
         Page<Contact> contactsPage = contactService.getAllContacts(pageable);
@@ -139,9 +168,9 @@ public class ContactController {
             @RequestParam(defaultValue = "firstName") String sortBy,
             @RequestParam(defaultValue = "asc") String direction
     ) {
-        Long userId = currentUserProvider.getCurrentUserId();
+        validatePaginationAndSorting(page, size, sortBy);
         int limitSize = Math.min(size, 10);
-        log.info("Searching contacts with keyword '{}' for user ID: {}, page: {}, size: {}", keyword, userId, page, limitSize);
+        log.info("Searching contacts, correlationId: {}, page: {}, size: {}", getCorrelationId(), page, limitSize);
         Sort sort = direction.equalsIgnoreCase("desc") ? Sort.by(sortBy).descending() : Sort.by(sortBy).ascending();
         Pageable pageable = PageRequest.of(page, limitSize, sort);
         Page<Contact> contactsPage = contactService.searchContacts(keyword, pageable);
