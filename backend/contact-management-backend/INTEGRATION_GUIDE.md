@@ -346,10 +346,10 @@ const api = axios.create({
 });
 
 // Request interceptor to attach JWT token
-// Request interceptor to attach JWT token
 // NOTE: Storing JWT tokens in localStorage makes them susceptible to XSS. In a production environment,
-// it is highly recommended to use HttpOnly, Secure, and SameSite cookies for session tokens.
-// If localStorage is required, ensure a robust Content Security Policy (CSP) is in place.
+// it is recommended to use header-based token storage. If using HttpOnly cookies for session tokens,
+// the backend must be updated to read the token from cookies instead of the Authorization header,
+// and CSRF protection must be enabled.
 api.interceptors.request.use(
   (config) => {
     const token = localStorage.getItem('token');
@@ -367,7 +367,8 @@ api.interceptors.response.use(
   (error) => {
     if (error.response && error.response.status === 401) {
       // Skip redirects for public authentication endpoints (login, register)
-      const isAuthRequest = error.config && (error.config.url.includes('/auth/login') || error.config.url.includes('/auth/register'));
+      const url = error.config && error.config.url ? String(error.config.url).toLowerCase() : '';
+      const isAuthRequest = url && (url.includes('/auth/login') || url.includes('/auth/register'));
       if (!isAuthRequest) {
         localStorage.removeItem('token');
         window.location.href = '/login';
