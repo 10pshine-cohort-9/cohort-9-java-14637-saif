@@ -16,17 +16,16 @@ This guide contains the instructions, request/response models, and code patterns
 
 ---
 
-## 2. Global Exception Format
-
 All error responses from the backend follow this unified JSON structure (handled by the global exception handler):
 
 ```json
 {
-  "timestamp": "2026-08-21T01:00:00Z",
+  "timestamp": "2026-08-21T15:30:00",
   "status": 400,
   "error": "Bad Request",
-  "message": "First name is required",
-  "path": "/api/contacts"
+  "errors": {
+    "firstName": "First name is required"
+  }
 }
 ```
 
@@ -132,7 +131,7 @@ Changes the user's password. **Note**: This will invalidate all previously issue
     "newPassword": "NewSecurePassword456"
   }
   ```
-- **Response** (`200 OK`): Plain text message `Password changed successfully` (or status code 200).
+- **Response** (`200 OK`): No response body.
 
 ---
 
@@ -209,6 +208,8 @@ Retrieve a list of the user's contacts. Pagination size is capped at a maximum o
         "firstName": "John",
         "lastName": "Doe",
         "title": "Mr.",
+        "email": null,
+        "phoneNumber": null,
         "company": "Tech Corp",
         "address": "123 Main Street",
         "notes": "Met at conference",
@@ -264,6 +265,8 @@ Retrieve details of a single contact.
     "firstName": "John",
     "lastName": "Doe",
     "title": "Mr.",
+    "email": null,
+    "phoneNumber": null,
     "company": "Tech Corp",
     "address": "123 Main Street",
     "notes": "Met at conference",
@@ -343,6 +346,10 @@ const api = axios.create({
 });
 
 // Request interceptor to attach JWT token
+// Request interceptor to attach JWT token
+// NOTE: Storing JWT tokens in localStorage makes them susceptible to XSS. In a production environment,
+// it is highly recommended to use HttpOnly, Secure, and SameSite cookies for session tokens.
+// If localStorage is required, ensure a robust Content Security Policy (CSP) is in place.
 api.interceptors.request.use(
   (config) => {
     const token = localStorage.getItem('token');
@@ -359,8 +366,12 @@ api.interceptors.response.use(
   (response) => response,
   (error) => {
     if (error.response && error.response.status === 401) {
-      localStorage.removeItem('token');
-      window.location.href = '/login';
+      // Skip redirects for public authentication endpoints (login, register)
+      const isAuthRequest = error.config && (error.config.url.includes('/auth/login') || error.config.url.includes('/auth/register'));
+      if (!isAuthRequest) {
+        localStorage.removeItem('token');
+        window.location.href = '/login';
+      }
     }
     return Promise.reject(error);
   }
