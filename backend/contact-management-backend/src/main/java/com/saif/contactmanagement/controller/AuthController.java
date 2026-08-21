@@ -31,14 +31,14 @@ public class AuthController {
     @PostMapping("/register")
     @ResponseStatus(HttpStatus.CREATED)
     public UserResponse register(@Valid @RequestBody UserRegistrationRequest request) {
-        log.info("Received registration request for email: {}", request.getEmail());
+        log.info("Received registration request");
         return userService.register(request);
     }
 
     @PostMapping("/login")
     @ResponseStatus(HttpStatus.OK)
     public LoginResponse login(@Valid @RequestBody LoginRequest request) {
-        log.info("Received login request for email: {}", request.getEmail());
+        log.info("Received login request");
         return userService.login(request);
     }
 

@@ -11,9 +11,11 @@ import java.time.ZoneId;
 import java.util.HashMap;
 import java.util.Map;
 
+import org.springframework.web.servlet.mvc.method.annotation.ResponseEntityExceptionHandler;
+
 @Slf4j
 @RestControllerAdvice
-public class GlobalExceptionHandler {
+public class GlobalExceptionHandler extends ResponseEntityExceptionHandler {
 
     @ExceptionHandler(EmailAlreadyExistsException.class)
     public ResponseEntity<Map<String, Object>> handleEmailAlreadyExists(
@@ -87,7 +89,7 @@ public class GlobalExceptionHandler {
     public ResponseEntity<Map<String, Object>> handleHttpMessageNotReadable(
             org.springframework.http.converter.HttpMessageNotReadableException ex) {
 
-        log.warn("Http message not readable: {}", ex.getMessage());
+        log.warn("Http message not readable. Event: HTTP_MESSAGE_READ_FAIL, ExceptionType: {}", ex.getClass().getSimpleName());
 
         Map<String, Object> response = new HashMap<>();
         response.put("timestamp", LocalDateTime.now(ZoneId.systemDefault()));
