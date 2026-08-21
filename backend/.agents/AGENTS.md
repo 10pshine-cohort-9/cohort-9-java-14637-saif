@@ -177,7 +177,7 @@ A feature is DONE only after:
 Implementation
 + Tests
 + Test execution
-+ >90% required coverage maintained
++ At least 90% required coverage maintained
 + Security/edge-case verification
 + Code-quality review
 + Git diff review
