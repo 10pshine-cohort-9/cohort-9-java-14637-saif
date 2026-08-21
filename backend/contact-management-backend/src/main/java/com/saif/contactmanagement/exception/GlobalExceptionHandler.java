@@ -20,6 +20,11 @@ import org.springframework.web.servlet.mvc.method.annotation.ResponseEntityExcep
 @RestControllerAdvice
 public class GlobalExceptionHandler extends ResponseEntityExceptionHandler {
 
+    private static final String TIMESTAMP_KEY = "timestamp";
+    private static final String STATUS_KEY = "status";
+    private static final String ERROR_KEY = "error";
+    private static final String MESSAGE_KEY = "message";
+
     @ExceptionHandler(EmailAlreadyExistsException.class)
     public ResponseEntity<Map<String, Object>> handleEmailAlreadyExists(
             EmailAlreadyExistsException ex) {
@@ -28,10 +33,10 @@ public class GlobalExceptionHandler extends ResponseEntityExceptionHandler {
 
         Map<String, Object> response = new HashMap<>();
 
-        response.put("timestamp", LocalDateTime.now(ZoneId.systemDefault()));
-        response.put("status", HttpStatus.CONFLICT.value());
-        response.put("error", HttpStatus.CONFLICT.getReasonPhrase());
-        response.put("message", ex.getMessage());
+        response.put(TIMESTAMP_KEY, LocalDateTime.now(ZoneId.systemDefault()));
+        response.put(STATUS_KEY, HttpStatus.CONFLICT.value());
+        response.put(ERROR_KEY, HttpStatus.CONFLICT.getReasonPhrase());
+        response.put(MESSAGE_KEY, ex.getMessage());
 
         return new ResponseEntity<>(response, HttpStatus.CONFLICT);
     }
@@ -44,13 +49,14 @@ public class GlobalExceptionHandler extends ResponseEntityExceptionHandler {
 
         Map<String, Object> response = new HashMap<>();
 
-        response.put("timestamp", LocalDateTime.now(ZoneId.systemDefault()));
-        response.put("status", HttpStatus.NOT_FOUND.value());
-        response.put("error", HttpStatus.NOT_FOUND.getReasonPhrase());
-        response.put("message", ex.getMessage());
+        response.put(TIMESTAMP_KEY, LocalDateTime.now(ZoneId.systemDefault()));
+        response.put(STATUS_KEY, HttpStatus.NOT_FOUND.value());
+        response.put(ERROR_KEY, HttpStatus.NOT_FOUND.getReasonPhrase());
+        response.put(MESSAGE_KEY, ex.getMessage());
 
         return new ResponseEntity<>(response, HttpStatus.NOT_FOUND);
     }
+
     @Override
     protected ResponseEntity<Object> handleMethodArgumentNotValid(
             MethodArgumentNotValidException ex,
@@ -60,16 +66,16 @@ public class GlobalExceptionHandler extends ResponseEntityExceptionHandler {
 
         Map<String, String> errors = new HashMap<>();
 
-        ex.getBindingResult().getFieldErrors().forEach(error -> {
-            errors.putIfAbsent(error.getField(), error.getDefaultMessage());
-        });
+        ex.getBindingResult().getFieldErrors().forEach(error ->
+            errors.putIfAbsent(error.getField(), error.getDefaultMessage())
+        );
 
         log.warn("Validation failed: {}", errors);
 
         Map<String, Object> response = new HashMap<>();
-        response.put("timestamp", LocalDateTime.now(ZoneId.systemDefault()));
-        response.put("status", status.value());
-        response.put("error", HttpStatus.valueOf(status.value()).getReasonPhrase());
+        response.put(TIMESTAMP_KEY, LocalDateTime.now(ZoneId.systemDefault()));
+        response.put(STATUS_KEY, status.value());
+        response.put(ERROR_KEY, HttpStatus.valueOf(status.value()).getReasonPhrase());
         response.put("errors", errors);
 
         return new ResponseEntity<>(response, status);
@@ -83,10 +89,10 @@ public class GlobalExceptionHandler extends ResponseEntityExceptionHandler {
 
         Map<String, Object> response = new HashMap<>();
 
-        response.put("timestamp", LocalDateTime.now(ZoneId.systemDefault()));
-        response.put("status", HttpStatus.UNAUTHORIZED.value());
-        response.put("error", HttpStatus.UNAUTHORIZED.getReasonPhrase());
-        response.put("message", ex.getMessage());
+        response.put(TIMESTAMP_KEY, LocalDateTime.now(ZoneId.systemDefault()));
+        response.put(STATUS_KEY, HttpStatus.UNAUTHORIZED.value());
+        response.put(ERROR_KEY, HttpStatus.UNAUTHORIZED.getReasonPhrase());
+        response.put(MESSAGE_KEY, ex.getMessage());
 
         return new ResponseEntity<>(response, HttpStatus.UNAUTHORIZED);
     }
@@ -101,10 +107,10 @@ public class GlobalExceptionHandler extends ResponseEntityExceptionHandler {
         log.warn("Http message not readable. Event: HTTP_MESSAGE_READ_FAIL, ExceptionType: {}", ex.getClass().getSimpleName());
 
         Map<String, Object> response = new HashMap<>();
-        response.put("timestamp", LocalDateTime.now(ZoneId.systemDefault()));
-        response.put("status", status.value());
-        response.put("error", HttpStatus.valueOf(status.value()).getReasonPhrase());
-        response.put("message", "Required request body is missing or invalid");
+        response.put(TIMESTAMP_KEY, LocalDateTime.now(ZoneId.systemDefault()));
+        response.put(STATUS_KEY, status.value());
+        response.put(ERROR_KEY, HttpStatus.valueOf(status.value()).getReasonPhrase());
+        response.put(MESSAGE_KEY, "Required request body is missing or invalid");
 
         return new ResponseEntity<>(response, status);
     }
@@ -114,10 +120,10 @@ public class GlobalExceptionHandler extends ResponseEntityExceptionHandler {
         log.error("An unexpected error occurred: ", ex);
 
         Map<String, Object> response = new HashMap<>();
-        response.put("timestamp", LocalDateTime.now(ZoneId.systemDefault()));
-        response.put("status", HttpStatus.INTERNAL_SERVER_ERROR.value());
-        response.put("error", HttpStatus.INTERNAL_SERVER_ERROR.getReasonPhrase());
-        response.put("message", "An internal server error occurred.");
+        response.put(TIMESTAMP_KEY, LocalDateTime.now(ZoneId.systemDefault()));
+        response.put(STATUS_KEY, HttpStatus.INTERNAL_SERVER_ERROR.value());
+        response.put(ERROR_KEY, HttpStatus.INTERNAL_SERVER_ERROR.getReasonPhrase());
+        response.put(MESSAGE_KEY, "An internal server error occurred.");
 
         return new ResponseEntity<>(response, HttpStatus.INTERNAL_SERVER_ERROR);
     }

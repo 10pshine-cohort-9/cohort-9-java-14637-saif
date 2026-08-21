@@ -98,6 +98,7 @@ class ContactControllerTest {
         CustomUserDetails userDetails = mock(CustomUserDetails.class);
         when(userDetails.getUser()).thenReturn(user);
         when(authentication.getPrincipal()).thenReturn(userDetails);
+        when(authentication.isAuthenticated()).thenReturn(true);
 
         SecurityContext securityContext = mock(SecurityContext.class);
         when(securityContext.getAuthentication()).thenReturn(authentication);
@@ -297,6 +298,7 @@ class ContactControllerTest {
     void shouldThrowBadCredentialsWhenPrincipalIsInvalid() throws Exception {
         Authentication authentication = mock(Authentication.class);
         when(authentication.getPrincipal()).thenReturn("invalid");
+        when(authentication.isAuthenticated()).thenReturn(true);
         SecurityContext securityContext = mock(SecurityContext.class);
         when(securityContext.getAuthentication()).thenReturn(authentication);
         SecurityContextHolder.setContext(securityContext);
@@ -415,8 +417,8 @@ class ContactControllerTest {
         emails.put("personal", "personal@example.com");
 
         Map<String, String> phoneNumbers = new HashMap<>();
-        phoneNumbers.put("work", "+111222333");
-        phoneNumbers.put("home", "+444555666");
+        phoneNumbers.put("work", "+1112223330");
+        phoneNumbers.put("home", "+4445556660");
 
         ContactRequest request = new ContactRequest();
         request.setFirstName("John");
@@ -443,7 +445,7 @@ class ContactControllerTest {
                 .andExpect(jsonPath("$.firstName").value("John"))
                 .andExpect(jsonPath("$.emails.work").value("work@example.com"))
                 .andExpect(jsonPath("$.emails.personal").value("personal@example.com"))
-                .andExpect(jsonPath("$.phoneNumbers.work").value("+111222333"))
-                .andExpect(jsonPath("$.phoneNumbers.home").value("+444555666"));
+                .andExpect(jsonPath("$.phoneNumbers.work").value("+1112223330"))
+                .andExpect(jsonPath("$.phoneNumbers.home").value("+4445556660"));
     }
 }
