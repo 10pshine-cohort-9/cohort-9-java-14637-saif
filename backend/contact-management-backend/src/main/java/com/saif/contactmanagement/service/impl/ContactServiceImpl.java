@@ -11,6 +11,8 @@ import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.security.authentication.BadCredentialsException;
 import org.springframework.stereotype.Service;
 
+import com.saif.contactmanagement.security.CurrentUserProvider;
+import org.springframework.transaction.annotation.Transactional;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 
@@ -20,25 +22,15 @@ public class ContactServiceImpl implements ContactService {
     private static final String CONTACT_NOT_FOUND = "Contact not found";
 
     private final ContactRepository contactRepository;
+    private final CurrentUserProvider currentUserProvider;
 
-    public ContactServiceImpl(ContactRepository contactRepository) {
+    public ContactServiceImpl(ContactRepository contactRepository, CurrentUserProvider currentUserProvider) {
         this.contactRepository = contactRepository;
-    }
-
-    private User getCurrentUser() {
-        Authentication authentication = SecurityContextHolder.getContext().getAuthentication();
-        if (authentication == null || !authentication.isAuthenticated()) {
-            throw new BadCredentialsException("User not authenticated");
-        }
-        Object principal = authentication.getPrincipal();
-        if (principal instanceof CustomUserDetails customUserDetails) {
-            return customUserDetails.getUser();
-        }
-        throw new BadCredentialsException("Invalid user details");
+        this.currentUserProvider = currentUserProvider;
     }
 
     private void validateOwnership(Contact contact) {
-        User currentUser = getCurrentUser();
+        User currentUser = currentUserProvider.getCurrentUser();
         if (contact.getUser() == null || !contact.getUser().getId().equals(currentUser.getId())) {
             throw new ResourceNotFoundException(CONTACT_NOT_FOUND);
         }
@@ -46,17 +38,14 @@ public class ContactServiceImpl implements ContactService {
 
     @Override
     public Contact createContact(Contact contact) {
-        contact.setUser(getCurrentUser());
+        contact.setUser(currentUserProvider.getCurrentUser());
         return contactRepository.save(contact);
     }
 
     @Override
-    public Page<Contact> getAllContacts(Long userId, Pageable pageable) {
-        User currentUser = getCurrentUser();
-        if (!currentUser.getId().equals(userId)) {
-            throw new ResourceNotFoundException(CONTACT_NOT_FOUND);
-        }
-        return contactRepository.findByUserId(userId, pageable);
+    public Page<Contact> getAllContacts(Pageable pageable) {
+        User currentUser = currentUserProvider.getCurrentUser();
+        return contactRepository.findByUserId(currentUser.getId(), pageable);
     }
 
     @Override
@@ -68,6 +57,7 @@ public class ContactServiceImpl implements ContactService {
     }
 
     @Override
+    @Transactional
     public Contact updateContact(Long id, Contact contact) {
         Contact existingContact = contactRepository.findById(id)
                 .orElseThrow(() -> new ResourceNotFoundException(CONTACT_NOT_FOUND));
@@ -96,6 +86,7 @@ public class ContactServiceImpl implements ContactService {
     }
 
     @Override
+    @Transactional
     public void deleteContact(Long id) {
         Contact contact = contactRepository.findById(id)
                 .orElseThrow(() -> new ResourceNotFoundException(CONTACT_NOT_FOUND));
@@ -104,18 +95,8 @@ public class ContactServiceImpl implements ContactService {
     }
 
     @Override
-    public Page<Contact> searchContacts(Long userId, String keyword, Pageable pageable) {
-        User currentUser = getCurrentUser();
-        if (!currentUser.getId().equals(userId)) {
-            throw new ResourceNotFoundException(CONTACT_NOT_FOUND);
-        }
-        return contactRepository
-                .findByUserIdAndFirstNameContainingIgnoreCaseOrUserIdAndLastNameContainingIgnoreCase(
-                        userId,
-                        keyword,
-                        userId,
-                        keyword,
-                        pageable
-                );
+    public Page<Contact> searchContacts(String keyword, Pageable pageable) {
+        User currentUser = currentUserProvider.getCurrentUser();
+        return contactRepository.searchByUserIdAndKeyword(currentUser.getId(), keyword, pageable);
     }
 }

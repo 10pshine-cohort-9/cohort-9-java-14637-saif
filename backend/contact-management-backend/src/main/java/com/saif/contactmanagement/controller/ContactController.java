@@ -5,6 +5,7 @@ import com.saif.contactmanagement.dto.response.ContactResponse;
 import com.saif.contactmanagement.entity.Contact;
 import com.saif.contactmanagement.service.ContactService;
 import com.saif.contactmanagement.service.impl.CustomUserDetails;
+import com.saif.contactmanagement.security.CurrentUserProvider;
 import jakarta.validation.Valid;
 import org.springframework.http.HttpStatus;
 import org.springframework.security.authentication.BadCredentialsException;
@@ -26,17 +27,11 @@ import lombok.extern.slf4j.Slf4j;
 public class ContactController {
 
     private final ContactService contactService;
+    private final CurrentUserProvider currentUserProvider;
 
-    public ContactController(ContactService contactService) {
+    public ContactController(ContactService contactService, CurrentUserProvider currentUserProvider) {
         this.contactService = contactService;
-    }
-
-    private Long getCurrentUserId() {
-        Authentication authentication = SecurityContextHolder.getContext().getAuthentication();
-        if (authentication != null && authentication.getPrincipal() instanceof CustomUserDetails) {
-            return ((CustomUserDetails) authentication.getPrincipal()).getUser().getId();
-        }
-        throw new BadCredentialsException("User not authenticated");
+        this.currentUserProvider = currentUserProvider;
     }
 
     private Contact toEntity(ContactRequest request) {
@@ -105,12 +100,12 @@ public class ContactController {
             @RequestParam(defaultValue = "firstName") String sortBy,
             @RequestParam(defaultValue = "asc") String direction
     ) {
-        Long userId = getCurrentUserId();
+        Long userId = currentUserProvider.getCurrentUserId();
         int limitSize = Math.min(size, 10);
         log.info("Fetching contacts for user ID: {}, page: {}, size: {}", userId, page, limitSize);
         Sort sort = direction.equalsIgnoreCase("desc") ? Sort.by(sortBy).descending() : Sort.by(sortBy).ascending();
         Pageable pageable = PageRequest.of(page, limitSize, sort);
-        Page<Contact> contactsPage = contactService.getAllContacts(userId, pageable);
+        Page<Contact> contactsPage = contactService.getAllContacts(pageable);
         return contactsPage.map(this::toResponse);
     }
 
@@ -144,12 +139,12 @@ public class ContactController {
             @RequestParam(defaultValue = "firstName") String sortBy,
             @RequestParam(defaultValue = "asc") String direction
     ) {
-        Long userId = getCurrentUserId();
+        Long userId = currentUserProvider.getCurrentUserId();
         int limitSize = Math.min(size, 10);
         log.info("Searching contacts with keyword '{}' for user ID: {}, page: {}, size: {}", keyword, userId, page, limitSize);
         Sort sort = direction.equalsIgnoreCase("desc") ? Sort.by(sortBy).descending() : Sort.by(sortBy).ascending();
         Pageable pageable = PageRequest.of(page, limitSize, sort);
-        Page<Contact> contactsPage = contactService.searchContacts(userId, keyword, pageable);
+        Page<Contact> contactsPage = contactService.searchContacts(keyword, pageable);
         return contactsPage.map(this::toResponse);
     }
 }

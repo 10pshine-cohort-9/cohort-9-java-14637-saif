@@ -8,7 +8,7 @@ public interface ContactService {
 
     Contact createContact(Contact contact);
 
-    Page<Contact> getAllContacts(Long userId, Pageable pageable);
+    Page<Contact> getAllContacts(Pageable pageable);
 
     Contact getContactById(Long id);
 
@@ -16,5 +16,5 @@ public interface ContactService {
 
     void deleteContact(Long id);
 
-    Page<Contact> searchContacts(Long userId, String keyword, Pageable pageable);
+    Page<Contact> searchContacts(String keyword, Pageable pageable);
 }
