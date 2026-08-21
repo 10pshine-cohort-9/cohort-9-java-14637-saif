@@ -2,6 +2,7 @@ package com.saif.contactmanagement.service.impl;
 
 import com.saif.contactmanagement.entity.Contact;
 import com.saif.contactmanagement.entity.User;
+import com.saif.contactmanagement.security.CurrentUserProvider;
 import com.saif.contactmanagement.exception.ResourceNotFoundException;
 import com.saif.contactmanagement.repository.ContactRepository;
 import org.junit.jupiter.api.AfterEach;
