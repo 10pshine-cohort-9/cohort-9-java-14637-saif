@@ -46,8 +46,8 @@ class ContactControllerTest {
     @Mock
     private ContactService contactService;
 
-    @InjectMocks
     private ContactController contactController;
+    private final com.saif.contactmanagement.security.CurrentUserProvider currentUserProvider = new com.saif.contactmanagement.security.CurrentUserProvider();
 
     private User currentUser;
     private Contact contact;
@@ -55,6 +55,7 @@ class ContactControllerTest {
 
     @BeforeEach
     void setUp() {
+        contactController = new ContactController(contactService, currentUserProvider);
         mockMvc = MockMvcBuilders.standaloneSetup(contactController)
                 .setControllerAdvice(new GlobalExceptionHandler())
                 .build();
@@ -155,7 +156,7 @@ class ContactControllerTest {
     void shouldGetAllContactsSuccessfully() throws Exception {
         mockSecurityContext(currentUser);
         Page<Contact> contactPage = new PageImpl<>(Collections.singletonList(contact), PageRequest.of(0, 10), 1);
-        when(contactService.getAllContacts(eq(1L), any(Pageable.class))).thenReturn(contactPage);
+        when(contactService.getAllContacts(any(Pageable.class))).thenReturn(contactPage);
 
         mockMvc.perform(get("/api/contacts")
                         .param("page", "0")
@@ -166,7 +167,7 @@ class ContactControllerTest {
                 .andExpect(jsonPath("$.content[0].id").value(100L))
                 .andExpect(jsonPath("$.content[0].firstName").value("John"));
 
-        verify(contactService).getAllContacts(eq(1L), any(Pageable.class));
+        verify(contactService).getAllContacts(any(Pageable.class));
     }
 
     // --- Get Contact By ID Tests ---
@@ -267,7 +268,7 @@ class ContactControllerTest {
     void shouldSearchContactsSuccessfully() throws Exception {
         mockSecurityContext(currentUser);
         Page<Contact> contactPage = new PageImpl<>(Collections.singletonList(contact), PageRequest.of(0, 10), 1);
-        when(contactService.searchContacts(eq(1L), eq("John"), any(Pageable.class))).thenReturn(contactPage);
+        when(contactService.searchContacts(eq("John"), any(Pageable.class))).thenReturn(contactPage);
 
         mockMvc.perform(get("/api/contacts/search")
                         .param("keyword", "John")
@@ -279,7 +280,7 @@ class ContactControllerTest {
                 .andExpect(jsonPath("$.content[0].id").value(100L))
                 .andExpect(jsonPath("$.content[0].firstName").value("John"));
 
-        verify(contactService).searchContacts(eq(1L), eq("John"), any(Pageable.class));
+        verify(contactService).searchContacts(eq("John"), any(Pageable.class));
     }
 
     @Test
@@ -311,12 +312,17 @@ class ContactControllerTest {
                 "Company", "Address", "Notes", null
         );
 
-        when(contactService.createContact(any(Contact.class))).thenReturn(contact);
+        org.mockito.ArgumentCaptor<Contact> contactCaptor = org.mockito.ArgumentCaptor.forClass(Contact.class);
+        when(contactService.createContact(contactCaptor.capture())).thenReturn(contact);
 
         mockMvc.perform(post("/api/contacts")
                         .contentType(MediaType.APPLICATION_JSON)
                         .content(objectMapper.writeValueAsString(reqWithNullFavorite)))
                 .andExpect(status().isCreated());
+
+        Contact capturedContact = contactCaptor.getValue();
+        org.junit.jupiter.api.Assertions.assertNotNull(capturedContact);
+        org.junit.jupiter.api.Assertions.assertFalse(capturedContact.getFavorite());
     }
 
     @Test
