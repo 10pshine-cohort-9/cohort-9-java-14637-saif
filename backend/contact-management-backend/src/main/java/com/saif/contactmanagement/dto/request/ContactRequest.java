@@ -47,8 +47,9 @@ public class ContactRequest {
 
     private Boolean favorite;
 
-    private Map<String, String> emails;
-    private Map<String, String> phoneNumbers;
+    private Map<@NotBlank(message = "Email label is required") @Size(max = 50, message = "Email label must not exceed 50 characters") String, @Email(message = "Please enter a valid email address") String> emails;
+
+    private Map<@NotBlank(message = "Phone label is required") @Size(max = 50, message = "Phone label must not exceed 50 characters") String, @Pattern(regexp = "^$|^\\+?\\d{10,15}$", message = "Phone number must contain 10 to 15 digits and may start with +") String> phoneNumbers;
 
     public ContactRequest(String firstName, String lastName, String title, String email, String phoneNumber, String company, String address, String notes, Boolean favorite) {
         this.firstName = firstName;
