@@ -11,6 +11,9 @@ import java.time.ZoneId;
 import java.util.HashMap;
 import java.util.Map;
 
+import org.springframework.http.HttpHeaders;
+import org.springframework.http.HttpStatusCode;
+import org.springframework.web.context.request.WebRequest;
 import org.springframework.web.servlet.mvc.method.annotation.ResponseEntityExceptionHandler;
 
 @Slf4j
@@ -48,9 +51,12 @@ public class GlobalExceptionHandler extends ResponseEntityExceptionHandler {
 
         return new ResponseEntity<>(response, HttpStatus.NOT_FOUND);
     }
-    @ExceptionHandler(MethodArgumentNotValidException.class)
-    public ResponseEntity<Map<String, Object>> handleValidationExceptions(
-            MethodArgumentNotValidException ex) {
+    @Override
+    protected ResponseEntity<Object> handleMethodArgumentNotValid(
+            MethodArgumentNotValidException ex,
+            HttpHeaders headers,
+            HttpStatusCode status,
+            WebRequest request) {
 
         Map<String, String> errors = new HashMap<>();
 
@@ -62,11 +68,11 @@ public class GlobalExceptionHandler extends ResponseEntityExceptionHandler {
 
         Map<String, Object> response = new HashMap<>();
         response.put("timestamp", LocalDateTime.now(ZoneId.systemDefault()));
-        response.put("status", HttpStatus.BAD_REQUEST.value());
-        response.put("error", HttpStatus.BAD_REQUEST.getReasonPhrase());
+        response.put("status", status.value());
+        response.put("error", HttpStatus.valueOf(status.value()).getReasonPhrase());
         response.put("errors", errors);
 
-        return new ResponseEntity<>(response, HttpStatus.BAD_REQUEST);
+        return new ResponseEntity<>(response, status);
     }
 
     @ExceptionHandler(org.springframework.security.core.AuthenticationException.class)
@@ -85,19 +91,22 @@ public class GlobalExceptionHandler extends ResponseEntityExceptionHandler {
         return new ResponseEntity<>(response, HttpStatus.UNAUTHORIZED);
     }
 
-    @ExceptionHandler(org.springframework.http.converter.HttpMessageNotReadableException.class)
-    public ResponseEntity<Map<String, Object>> handleHttpMessageNotReadable(
-            org.springframework.http.converter.HttpMessageNotReadableException ex) {
+    @Override
+    protected ResponseEntity<Object> handleHttpMessageNotReadable(
+            org.springframework.http.converter.HttpMessageNotReadableException ex,
+            HttpHeaders headers,
+            HttpStatusCode status,
+            WebRequest request) {
 
         log.warn("Http message not readable. Event: HTTP_MESSAGE_READ_FAIL, ExceptionType: {}", ex.getClass().getSimpleName());
 
         Map<String, Object> response = new HashMap<>();
         response.put("timestamp", LocalDateTime.now(ZoneId.systemDefault()));
-        response.put("status", HttpStatus.BAD_REQUEST.value());
-        response.put("error", HttpStatus.BAD_REQUEST.getReasonPhrase());
+        response.put("status", status.value());
+        response.put("error", HttpStatus.valueOf(status.value()).getReasonPhrase());
         response.put("message", "Required request body is missing or invalid");
 
-        return new ResponseEntity<>(response, HttpStatus.BAD_REQUEST);
+        return new ResponseEntity<>(response, status);
     }
 
     @ExceptionHandler(Exception.class)

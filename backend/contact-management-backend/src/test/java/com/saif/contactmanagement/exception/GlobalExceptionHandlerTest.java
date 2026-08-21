@@ -40,13 +40,21 @@ class GlobalExceptionHandlerTest {
         when(ex.getBindingResult()).thenReturn(bindingResult);
         when(bindingResult.getFieldErrors()).thenReturn(List.of(fieldError));
 
-        ResponseEntity<Map<String, Object>> response = handler.handleValidationExceptions(ex);
+        ResponseEntity<Object> response = handler.handleMethodArgumentNotValid(
+                ex,
+                new org.springframework.http.HttpHeaders(),
+                HttpStatus.BAD_REQUEST,
+                mock(org.springframework.web.context.request.WebRequest.class)
+        );
 
         assertNotNull(response);
         assertEquals(HttpStatus.BAD_REQUEST, response.getStatusCode());
-        assertEquals(HttpStatus.BAD_REQUEST.value(), response.getBody().get("status"));
+        
+        Map<?, ?> body = (Map<?, ?>) response.getBody();
+        assertNotNull(body);
+        assertEquals(HttpStatus.BAD_REQUEST.value(), body.get("status"));
 
-        Map<?, ?> errors = (Map<?, ?>) response.getBody().get("errors");
+        Map<?, ?> errors = (Map<?, ?>) body.get("errors");
         assertNotNull(errors);
         assertEquals("Invalid email format", errors.get("email"));
     }
