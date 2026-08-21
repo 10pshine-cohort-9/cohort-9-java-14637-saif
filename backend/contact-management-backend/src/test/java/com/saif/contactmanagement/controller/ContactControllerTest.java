@@ -45,6 +45,8 @@ class ContactControllerTest {
 
     @Mock
     private ContactService contactService;
+    @Mock
+    private jakarta.servlet.http.HttpServletRequest httpServletRequest;
 
     private ContactController contactController;
     private final com.saif.contactmanagement.security.CurrentUserProvider currentUserProvider = new com.saif.contactmanagement.security.CurrentUserProvider();
@@ -55,7 +57,7 @@ class ContactControllerTest {
 
     @BeforeEach
     void setUp() {
-        contactController = new ContactController(contactService, currentUserProvider);
+        contactController = new ContactController(contactService, currentUserProvider, httpServletRequest);
         mockMvc = MockMvcBuilders.standaloneSetup(contactController)
                 .setControllerAdvice(new GlobalExceptionHandler())
                 .build();
@@ -447,5 +449,41 @@ class ContactControllerTest {
                 .andExpect(jsonPath("$.emails.personal").value("personal@example.com"))
                 .andExpect(jsonPath("$.phoneNumbers.work").value("+1112223330"))
                 .andExpect(jsonPath("$.phoneNumbers.home").value("+4445556660"));
+    }
+
+    @Test
+    void shouldReturnBadRequestWhenPageIsNegative() throws Exception {
+        mockMvc.perform(get("/api/contacts")
+                        .param("page", "-1"))
+                .andExpect(status().isBadRequest());
+
+        mockMvc.perform(get("/api/contacts/search")
+                        .param("keyword", "test")
+                        .param("page", "-1"))
+                .andExpect(status().isBadRequest());
+    }
+
+    @Test
+    void shouldReturnBadRequestWhenSizeIsNonPositive() throws Exception {
+        mockMvc.perform(get("/api/contacts")
+                        .param("size", "0"))
+                .andExpect(status().isBadRequest());
+
+        mockMvc.perform(get("/api/contacts/search")
+                        .param("keyword", "test")
+                        .param("size", "-5"))
+                .andExpect(status().isBadRequest());
+    }
+
+    @Test
+    void shouldReturnBadRequestWhenSortByIsInvalid() throws Exception {
+        mockMvc.perform(get("/api/contacts")
+                        .param("sortBy", "invalidField"))
+                .andExpect(status().isBadRequest());
+
+        mockMvc.perform(get("/api/contacts/search")
+                        .param("keyword", "test")
+                        .param("sortBy", "password"))
+                .andExpect(status().isBadRequest());
     }
 }
