@@ -486,4 +486,16 @@ class ContactControllerTest {
                         .param("sortBy", "password"))
                 .andExpect(status().isBadRequest());
     }
+
+    @Test
+    void shouldReturnBadRequestWhenDirectionIsInvalid() throws Exception {
+        mockMvc.perform(get("/api/contacts")
+                        .param("direction", "invalid"))
+                .andExpect(status().isBadRequest());
+
+        mockMvc.perform(get("/api/contacts/search")
+                        .param("keyword", "test")
+                        .param("direction", "asc123"))
+                .andExpect(status().isBadRequest());
+    }
 }

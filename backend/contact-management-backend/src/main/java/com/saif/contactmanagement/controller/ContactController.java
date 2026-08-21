@@ -99,7 +99,7 @@ public class ContactController {
         return toResponse(savedContact);
     }
 
-    private void validatePaginationAndSorting(int page, int size, String sortBy) {
+    private void validatePaginationAndSorting(int page, int size, String sortBy, String direction) {
         if (page < 0) {
             throw new org.springframework.web.server.ResponseStatusException(
                     HttpStatus.BAD_REQUEST, "Page index must not be less than zero");
@@ -111,6 +111,10 @@ public class ContactController {
         if (!ALLOWED_SORT_PROPERTIES.contains(sortBy)) {
             throw new org.springframework.web.server.ResponseStatusException(
                     HttpStatus.BAD_REQUEST, "Sort property '" + sortBy + "' is not supported");
+        }
+        if (!"asc".equalsIgnoreCase(direction) && !"desc".equalsIgnoreCase(direction)) {
+            throw new org.springframework.web.server.ResponseStatusException(
+                    HttpStatus.BAD_REQUEST, "Sort direction '" + direction + "' is not supported");
         }
     }
 
@@ -129,7 +133,7 @@ public class ContactController {
             @RequestParam(defaultValue = "firstName") String sortBy,
             @RequestParam(defaultValue = "asc") String direction
     ) {
-        validatePaginationAndSorting(page, size, sortBy);
+        validatePaginationAndSorting(page, size, sortBy, direction);
         currentUserProvider.getCurrentUserId();
         int limitSize = Math.min(size, 10);
         log.info("Fetching contacts, correlationId: {}, page: {}, size: {}", getCorrelationId(), page, limitSize);
@@ -169,7 +173,7 @@ public class ContactController {
             @RequestParam(defaultValue = "firstName") String sortBy,
             @RequestParam(defaultValue = "asc") String direction
     ) {
-        validatePaginationAndSorting(page, size, sortBy);
+        validatePaginationAndSorting(page, size, sortBy, direction);
         currentUserProvider.getCurrentUserId();
         int limitSize = Math.min(size, 10);
         log.info("Searching contacts, correlationId: {}, page: {}, size: {}", getCorrelationId(), page, limitSize);
