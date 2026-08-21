@@ -130,6 +130,7 @@ public class ContactController {
             @RequestParam(defaultValue = "asc") String direction
     ) {
         validatePaginationAndSorting(page, size, sortBy);
+        currentUserProvider.getCurrentUserId();
         int limitSize = Math.min(size, 10);
         log.info("Fetching contacts, correlationId: {}, page: {}, size: {}", getCorrelationId(), page, limitSize);
         Sort sort = direction.equalsIgnoreCase("desc") ? Sort.by(sortBy).descending() : Sort.by(sortBy).ascending();
@@ -169,6 +170,7 @@ public class ContactController {
             @RequestParam(defaultValue = "asc") String direction
     ) {
         validatePaginationAndSorting(page, size, sortBy);
+        currentUserProvider.getCurrentUserId();
         int limitSize = Math.min(size, 10);
         log.info("Searching contacts, correlationId: {}, page: {}, size: {}", getCorrelationId(), page, limitSize);
         Sort sort = direction.equalsIgnoreCase("desc") ? Sort.by(sortBy).descending() : Sort.by(sortBy).ascending();
