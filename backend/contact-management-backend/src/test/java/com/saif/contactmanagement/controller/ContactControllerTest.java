@@ -346,7 +346,7 @@ class ContactControllerTest {
     void shouldGetAllContactsSortedDescending() throws Exception {
         mockSecurityContext(currentUser);
         Page<Contact> contactPage = new PageImpl<>(Collections.singletonList(contact), PageRequest.of(0, 10), 1);
-        when(contactService.getAllContacts(eq(1L), any(Pageable.class))).thenReturn(contactPage);
+        when(contactService.getAllContacts(any(Pageable.class))).thenReturn(contactPage);
 
         mockMvc.perform(get("/api/contacts")
                         .param("page", "0")
@@ -355,14 +355,14 @@ class ContactControllerTest {
                         .param("direction", "desc"))
                 .andExpect(status().isOk());
 
-        verify(contactService).getAllContacts(eq(1L), any(Pageable.class));
+        verify(contactService).getAllContacts(any(Pageable.class));
     }
 
     @Test
     void shouldSearchContactsSortedDescending() throws Exception {
         mockSecurityContext(currentUser);
         Page<Contact> contactPage = new PageImpl<>(Collections.singletonList(contact), PageRequest.of(0, 10), 1);
-        when(contactService.searchContacts(eq(1L), eq("John"), any(Pageable.class))).thenReturn(contactPage);
+        when(contactService.searchContacts(eq("John"), any(Pageable.class))).thenReturn(contactPage);
 
         mockMvc.perform(get("/api/contacts/search")
                         .param("keyword", "John")
@@ -372,14 +372,14 @@ class ContactControllerTest {
                         .param("direction", "desc"))
                 .andExpect(status().isOk());
 
-        verify(contactService).searchContacts(eq(1L), eq("John"), any(Pageable.class));
+        verify(contactService).searchContacts(eq("John"), any(Pageable.class));
     }
 
     @Test
     void shouldCapPageSizeToTenWhenGetAllContactsRequestedWithLargerSize() throws Exception {
         mockSecurityContext(currentUser);
         Page<Contact> contactPage = new PageImpl<>(Collections.singletonList(contact), PageRequest.of(0, 10), 1);
-        when(contactService.getAllContacts(eq(1L), any(Pageable.class))).thenReturn(contactPage);
+        when(contactService.getAllContacts(any(Pageable.class))).thenReturn(contactPage);
 
         mockMvc.perform(get("/api/contacts")
                         .param("page", "0")
@@ -387,7 +387,7 @@ class ContactControllerTest {
                 .andExpect(status().isOk());
 
         org.mockito.ArgumentCaptor<Pageable> pageableCaptor = org.mockito.ArgumentCaptor.forClass(Pageable.class);
-        verify(contactService).getAllContacts(eq(1L), pageableCaptor.capture());
+        verify(contactService).getAllContacts(pageableCaptor.capture());
         org.junit.jupiter.api.Assertions.assertEquals(10, pageableCaptor.getValue().getPageSize());
     }
 
@@ -395,7 +395,7 @@ class ContactControllerTest {
     void shouldCapPageSizeToTenWhenSearchContactsRequestedWithLargerSize() throws Exception {
         mockSecurityContext(currentUser);
         Page<Contact> contactPage = new PageImpl<>(Collections.singletonList(contact), PageRequest.of(0, 10), 1);
-        when(contactService.searchContacts(eq(1L), eq("John"), any(Pageable.class))).thenReturn(contactPage);
+        when(contactService.searchContacts(eq("John"), any(Pageable.class))).thenReturn(contactPage);
 
         mockMvc.perform(get("/api/contacts/search")
                         .param("keyword", "John")
@@ -404,7 +404,7 @@ class ContactControllerTest {
                 .andExpect(status().isOk());
 
         org.mockito.ArgumentCaptor<Pageable> pageableCaptor = org.mockito.ArgumentCaptor.forClass(Pageable.class);
-        verify(contactService).searchContacts(eq(1L), eq("John"), pageableCaptor.capture());
+        verify(contactService).searchContacts(eq("John"), pageableCaptor.capture());
         org.junit.jupiter.api.Assertions.assertEquals(10, pageableCaptor.getValue().getPageSize());
     }
 
