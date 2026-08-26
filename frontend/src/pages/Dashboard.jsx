@@ -1,9 +1,24 @@
 import React, { useState, useEffect, useRef } from 'react';
-import { Search, Plus, Upload, Download, Trash2, Edit, ChevronLeft, ChevronRight, UserPlus, Star, ChevronDown, ChevronUp } from 'lucide-react';
+import { Search, Plus, Upload, Download, Trash2, Edit, ChevronLeft, ChevronRight, UserPlus, Star, Users, User, LogOut, Sun, Moon, Mail, Phone, MapPin } from 'lucide-react';
 import api from '../services/api';
-import Navbar from '../components/Navbar';
 import ContactModal from '../components/ContactModal';
 import ProfileModal from '../components/ProfileModal';
+
+const AVATAR_GRADIENTS = [
+  'linear-gradient(135deg, #fbbf24 0%, #d97706 100%)', // Amber/Yellow
+  'linear-gradient(135deg, #60a5fa 0%, #2563eb 100%)', // Blue
+  'linear-gradient(135deg, #34d399 0%, #059669 100%)', // Green
+  'linear-gradient(135deg, #f472b6 0%, #db2777 100%)', // Pink
+  'linear-gradient(135deg, #a78bfa 0%, #7c3aed 100%)', // Purple
+  'linear-gradient(135deg, #fb7185 0%, #e11d48 100%)'  // Rose
+];
+
+const getAvatarStyle = (firstName = '', lastName = '') => {
+  const fullName = `${firstName} ${lastName}`.trim();
+  const code = fullName.split('').reduce((acc, char) => acc + char.charCodeAt(0), 0);
+  const gradient = AVATAR_GRADIENTS[code % AVATAR_GRADIENTS.length];
+  return { background: gradient };
+};
 
 export default function Dashboard({ onShowToast, theme, toggleTheme }) {
   const [contacts, setContacts] = useState([]);
@@ -58,21 +73,11 @@ export default function Dashboard({ onShowToast, theme, toggleTheme }) {
     const val = e.target.value;
     setSearchQuery(val);
     setPage(0);
-    // Fetch immediately or debounce. Let's fetch immediately for responsive search experience
     fetchContacts(val);
   };
 
-  const handleSort = (field) => {
-    if (sortBy === field) {
-      setSortDir(sortDir === 'asc' ? 'desc' : 'asc');
-    } else {
-      setSortBy(field);
-      setSortDir('asc');
-    }
-    setPage(0);
-  };
-
-  const handleDelete = async (id) => {
+  const handleDelete = async (e, id) => {
+    e.stopPropagation();
     if (window.confirm('Are you sure you want to delete this contact?')) {
       try {
         await api.delete(`/contacts/${id}`);
@@ -84,10 +89,9 @@ export default function Dashboard({ onShowToast, theme, toggleTheme }) {
     }
   };
 
-  const handleToggleFavorite = async (contact) => {
+  const handleToggleFavorite = async (e, contact) => {
+    e.stopPropagation();
     try {
-      const updated = { ...contact, favorite: !contact.favorite };
-      // Strip Hibernate unneeded properties if needed, but our PUT matches entity structure
       await api.put(`/contacts/${contact.id}`, {
         firstName: contact.firstName,
         lastName: contact.lastName,
@@ -141,7 +145,6 @@ export default function Dashboard({ onShowToast, theme, toggleTheme }) {
     } catch (err) {
       onShowToast(err.response?.data?.message || 'Failed to import contacts. Please verify CSV format.', true);
     } finally {
-      // Clear file input
       e.target.value = '';
     }
   };
@@ -156,26 +159,75 @@ export default function Dashboard({ onShowToast, theme, toggleTheme }) {
     setIsContactOpen(true);
   };
 
-  const getSortIcon = (field) => {
-    if (sortBy !== field) return null;
-    return sortDir === 'asc' ? <ChevronUp size={16} /> : <ChevronDown size={16} />;
+  const handleLogout = () => {
+    localStorage.removeItem('token');
+    localStorage.removeItem('email');
+    window.location.href = '/login';
   };
 
   return (
-    <div className="dashboard-layout">
-      <Navbar onOpenProfile={() => setIsProfileOpen(true)} userEmail={userEmail} theme={theme} toggleTheme={toggleTheme} />
+    <div className="dashboard-container">
+      {/* Premium Sidebar Layout */}
+      <aside className="sidebar">
+        <div className="sidebar-logo">
+          <Users size={24} />
+          <span>Contact<span>Hub</span></span>
+        </div>
 
-      <main className="main-content">
-        <div className="panel-header">
-          <div className="search-bar-container">
-            <Search className="search-icon" size={18} />
-            <input
-              type="text"
-              className="search-input"
-              placeholder="Search by first name or last name..."
-              value={searchQuery}
-              onChange={handleSearchChange}
-            />
+        <div className="sidebar-menu">
+          <div className="sidebar-item active">
+            <Users size={18} />
+            <span>All Contacts ({totalElements})</span>
+          </div>
+        </div>
+
+        <div className="sidebar-footer">
+          <div className="sidebar-user">
+            <div className="sidebar-user-avatar">
+              {userEmail.charAt(0).toUpperCase()}
+            </div>
+            <div className="sidebar-user-email" title={userEmail}>
+              {userEmail}
+            </div>
+          </div>
+
+          <div style={{ display: 'flex', gap: '8px' }}>
+            <button
+              className="btn btn-secondary btn-icon"
+              style={{ flex: 1 }}
+              onClick={toggleTheme}
+              title={theme === 'dark' ? 'Light Mode' : 'Dark Mode'}
+            >
+              {theme === 'dark' ? <Sun size={16} /> : <Moon size={16} />}
+            </button>
+            <button
+              className="btn btn-secondary btn-icon"
+              style={{ flex: 1 }}
+              onClick={() => setIsProfileOpen(true)}
+              title="My Profile"
+            >
+              <User size={16} />
+            </button>
+            <button
+              className="btn btn-danger btn-icon"
+              style={{ flex: 1 }}
+              onClick={handleLogout}
+              title="Log Out"
+            >
+              <LogOut size={16} />
+            </button>
+          </div>
+        </div>
+      </aside>
+
+      {/* Main Panel */}
+      <main className="dashboard-main">
+        <div className="dashboard-header">
+          <div>
+            <h2>My <span>Contacts</span></h2>
+            <p style={{ color: 'var(--text-secondary)', fontSize: '0.9rem', marginTop: '4px' }}>
+              Manage, search, and import/export your address book
+            </p>
           </div>
 
           <div className="action-buttons">
@@ -187,123 +239,183 @@ export default function Dashboard({ onShowToast, theme, toggleTheme }) {
               onChange={handleImportFileChange}
             />
             <button className="btn btn-secondary" onClick={handleImportClick}>
-              <Upload size={18} /> Import CSV
+              <Upload size={16} /> Import
             </button>
             <button className="btn btn-secondary" onClick={handleExport}>
-              <Download size={18} /> Export CSV
+              <Download size={16} /> Export
             </button>
             <button className="btn btn-primary" onClick={openCreateModal}>
-              <Plus size={18} /> New Contact
+              <Plus size={16} /> Add Contact
             </button>
           </div>
         </div>
 
-        <div className="glass-panel" style={{ padding: '24px' }}>
-          {contacts.length === 0 ? (
+        {/* Search Panel */}
+        <div style={{ display: 'flex', gap: '16px', marginBottom: '24px' }}>
+          <div className="search-bar-container">
+            <Search className="search-icon" size={16} />
+            <input
+              type="text"
+              className="search-input"
+              placeholder="Search by name..."
+              value={searchQuery}
+              onChange={handleSearchChange}
+            />
+          </div>
+
+          <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+            <span style={{ fontSize: '0.85rem', color: 'var(--text-secondary)', fontWeight: 600 }}>SORT:</span>
+            <select
+              value={sortBy}
+              onChange={(e) => { setSortBy(e.target.value); setPage(0); }}
+              className="form-input"
+              style={{ padding: '6px 12px', fontSize: '0.85rem', cursor: 'pointer' }}
+            >
+              <option value="firstName">First Name</option>
+              <option value="lastName">Last Name</option>
+              <option value="company">Company</option>
+            </select>
+            <button
+              className="btn btn-secondary btn-icon"
+              style={{ padding: '6px 10px' }}
+              onClick={() => { setSortDir(sortDir === 'asc' ? 'desc' : 'asc'); setPage(0); }}
+            >
+              {sortDir === 'asc' ? 'ASC' : 'DESC'}
+            </button>
+          </div>
+        </div>
+
+        {/* Contacts Cards Grid */}
+        {contacts.length === 0 ? (
+          <div className="glass-panel" style={{ padding: '40px' }}>
             <div className="empty-state">
               <UserPlus className="empty-state-icon" size={48} />
               <h3>No Contacts Found</h3>
               <p>Get started by creating a new contact or importing from a CSV file.</p>
             </div>
-          ) : (
-            <>
-              <div className="contacts-table-container">
-                <table className="contacts-table">
-                  <thead>
-                    <tr>
-                      <th onClick={() => handleSort('firstName')}>Name {getSortIcon('firstName')}</th>
-                      <th onClick={() => handleSort('title')}>Title {getSortIcon('title')}</th>
-                      <th onClick={() => handleSort('email')}>Email {getSortIcon('email')}</th>
-                      <th onClick={() => handleSort('phoneNumber')}>Phone {getSortIcon('phoneNumber')}</th>
-                      <th onClick={() => handleSort('company')}>Company {getSortIcon('company')}</th>
-                      <th>Labels</th>
-                      <th>Actions</th>
-                    </tr>
-                  </thead>
-                  <tbody>
-                    {contacts.map((contact) => (
-                      <tr key={contact.id}>
-                        <td>
-                          <div className="contact-name-cell">
-                            <button
-                              onClick={() => handleToggleFavorite(contact)}
-                              style={{ background: 'none', border: 'none', cursor: 'pointer', padding: 0 }}
-                            >
-                              <Star
-                                size={18}
-                                fill={contact.favorite ? '#facc15' : 'none'}
-                                color={contact.favorite ? '#facc15' : 'var(--text-secondary)'}
-                              />
-                            </button>
-                            <div className="contact-avatar">
-                              {contact.firstName ? contact.firstName.charAt(0).toUpperCase() : ''}
-                            </div>
-                            <div>
-                              <div style={{ fontWeight: 600 }}>{contact.firstName} {contact.lastName}</div>
-                              {contact.favorite && <span className="badge badge-favorite">Favorite</span>}
-                            </div>
-                          </div>
-                        </td>
-                        <td>{contact.title || '-'}</td>
-                        <td>{contact.email || '-'}</td>
-                        <td>{contact.phoneNumber || '-'}</td>
-                        <td>{contact.company || '-'}</td>
-                        <td>
-                          {/* Render labeled emails */}
-                          {Object.entries(contact.emails || {}).map(([label, val]) => (
-                            <span key={label} className="badge badge-label" title={val}>
-                              {label}: email
-                            </span>
-                          ))}
-                          {/* Render labeled phones */}
-                          {Object.entries(contact.phoneNumbers || {}).map(([label, val]) => (
-                            <span key={label} className="badge badge-label" title={val}>
-                              {label}: phone
-                            </span>
-                          ))}
-                          {Object.keys(contact.emails || {}).length === 0 && Object.keys(contact.phoneNumbers || {}).length === 0 && '-'}
-                        </td>
-                        <td>
-                          <div style={{ display: 'flex', gap: '8px' }}>
-                            <button className="btn btn-secondary btn-icon" onClick={() => openEditModal(contact.id)} title="Edit">
-                              <Edit size={16} />
-                            </button>
-                            <button className="btn btn-danger btn-icon" onClick={() => handleDelete(contact.id)} title="Delete">
-                              <Trash2 size={16} />
-                            </button>
-                          </div>
-                        </td>
-                      </tr>
-                    ))}
-                  </tbody>
-                </table>
-              </div>
+          </div>
+        ) : (
+          <>
+            <div className="contacts-grid">
+              {contacts.map((contact) => (
+                <div
+                  key={contact.id}
+                  className="glass-panel contact-card"
+                  onClick={() => openEditModal(contact.id)}
+                  style={{ cursor: 'pointer' }}
+                >
+                  <div className="contact-card-header">
+                    <div
+                      className="contact-card-avatar"
+                      style={getAvatarStyle(contact.firstName, contact.lastName)}
+                    >
+                      {contact.firstName ? contact.firstName.charAt(0).toUpperCase() : ''}
+                    </div>
+                    <div className="contact-card-actions">
+                      <button
+                        className="btn btn-secondary btn-icon"
+                        onClick={(e) => { e.stopPropagation(); openEditModal(contact.id); }}
+                        title="Edit"
+                        style={{ padding: '6px' }}
+                      >
+                        <Edit size={14} />
+                      </button>
+                      <button
+                        className="btn btn-danger btn-icon"
+                        onClick={(e) => handleDelete(e, contact.id)}
+                        title="Delete"
+                        style={{ padding: '6px' }}
+                      >
+                        <Trash2 size={14} />
+                      </button>
+                    </div>
+                  </div>
 
-              {/* Pagination controls */}
-              <div className="pagination-container">
-                <span className="pagination-text">
-                  Showing {page * pageSize + 1} - {Math.min((page + 1) * pageSize, totalElements)} of {totalElements} contacts
-                </span>
-                <div className="pagination-buttons">
-                  <button
-                    className="btn btn-secondary btn-icon"
-                    disabled={page === 0}
-                    onClick={() => setPage(page - 1)}
-                  >
-                    <ChevronLeft size={18} />
-                  </button>
-                  <button
-                    className="btn btn-secondary btn-icon"
-                    disabled={page >= totalPages - 1}
-                    onClick={() => setPage(page + 1)}
-                  >
-                    <ChevronRight size={18} />
-                  </button>
+                  <div className="contact-card-body">
+                    <div className="contact-card-name">
+                      {contact.title ? `${contact.title} ` : ''}{contact.firstName} {contact.lastName}
+                    </div>
+                    {contact.company && (
+                      <div style={{ fontSize: '0.85rem', color: 'var(--text-secondary)', marginBottom: '8px', fontWeight: 500 }}>
+                        {contact.company}
+                      </div>
+                    )}
+                    
+                    {contact.email && (
+                      <div className="contact-card-meta">
+                        <Mail size={14} />
+                        <span>{contact.email}</span>
+                      </div>
+                    )}
+                    
+                    {contact.phoneNumber && (
+                      <div className="contact-card-meta">
+                        <Phone size={14} />
+                        <span>{contact.phoneNumber}</span>
+                      </div>
+                    )}
+
+                    {contact.address && (
+                      <div className="contact-card-meta">
+                        <MapPin size={14} />
+                        <span style={{ overflow: 'hidden', textOverflow: 'ellipsis', white-space: 'nowrap' }}>
+                          {contact.address}
+                        </span>
+                      </div>
+                    )}
+
+                    <div className="contact-card-labels">
+                      <button
+                        onClick={(e) => handleToggleFavorite(e, contact)}
+                        style={{ background: 'none', border: 'none', cursor: 'pointer', padding: 0 }}
+                      >
+                        <span className={`badge ${contact.favorite ? 'badge-favorite' : 'badge-label'}`} style={{ display: 'flex', alignItems: 'center', gap: '4px' }}>
+                          <Star size={10} fill={contact.favorite ? 'var(--primary)' : 'none'} />
+                          {contact.favorite ? 'Favorite' : 'Mark Fav'}
+                        </span>
+                      </button>
+
+                      {Object.keys(contact.emails || {}).map((label) => (
+                        <span key={label} className="badge badge-label">
+                          {label}
+                        </span>
+                      ))}
+
+                      {Object.keys(contact.phoneNumbers || {}).map((label) => (
+                        <span key={label} className="badge badge-label">
+                          {label}
+                        </span>
+                      ))}
+                    </div>
+                  </div>
                 </div>
+              ))}
+            </div>
+
+            {/* Pagination */}
+            <div className="pagination-container">
+              <span className="pagination-text">
+                Showing <strong>{page * pageSize + 1}</strong> - <strong>{Math.min((page + 1) * pageSize, totalElements)}</strong> of <strong>{totalElements}</strong> contacts
+              </span>
+              <div className="pagination-buttons">
+                <button
+                  className="btn btn-secondary btn-icon"
+                  disabled={page === 0}
+                  onClick={() => setPage(page - 1)}
+                >
+                  <ChevronLeft size={16} />
+                </button>
+                <button
+                  className="btn btn-secondary btn-icon"
+                  disabled={page >= totalPages - 1}
+                  onClick={() => setPage(page + 1)}
+                >
+                  <ChevronRight size={16} />
+                </button>
               </div>
-            </>
-          )}
-        </div>
+            </div>
+          </>
+        )}
       </main>
 
       <ContactModal
