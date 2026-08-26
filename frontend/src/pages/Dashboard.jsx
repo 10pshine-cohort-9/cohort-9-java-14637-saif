@@ -358,7 +358,7 @@ export default function Dashboard({ onShowToast, theme, toggleTheme }) {
                     {contact.address && (
                       <div className="contact-card-meta">
                         <MapPin size={14} />
-                        <span style={{ overflow: 'hidden', textOverflow: 'ellipsis', white-space: 'nowrap' }}>
+                        <span style={{ overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
                           {contact.address}
                         </span>
                       </div>
