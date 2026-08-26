@@ -1,5 +1,5 @@
 import React, { useState, useEffect, useRef } from 'react';
-import { Search, Plus, Upload, Download, Trash2, Edit, ChevronLeft, ChevronRight, UserPlus, Star, Users, User, LogOut, Sun, Moon, Mail, Phone, MapPin } from 'lucide-react';
+import { Search, Plus, Upload, Download, Trash2, Edit, ChevronLeft, ChevronRight, UserPlus, Star, Users, User, LogOut, Sun, Moon, Mail, Phone, MapPin, ChevronDown, ChevronUp } from 'lucide-react';
 import api from '../services/api';
 import ContactModal from '../components/ContactModal';
 import ProfileModal from '../components/ProfileModal';
@@ -250,38 +250,40 @@ export default function Dashboard({ onShowToast, theme, toggleTheme }) {
           </div>
         </div>
 
-        {/* Search Panel */}
-        <div style={{ display: 'flex', gap: '16px', marginBottom: '24px' }}>
-          <div className="search-bar-container">
-            <Search className="search-icon" size={16} />
+        {/* Search & Sort Filter Bar */}
+        <div className="filter-bar">
+          <div className="search-container">
+            <Search className="search-icon-inside" size={18} />
             <input
               type="text"
-              className="search-input"
+              className="search-input-premium"
               placeholder="Search by name..."
               value={searchQuery}
               onChange={handleSearchChange}
             />
           </div>
 
-          <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
-            <span style={{ fontSize: '0.85rem', color: 'var(--text-secondary)', fontWeight: 600 }}>SORT:</span>
-            <select
-              value={sortBy}
-              onChange={(e) => { setSortBy(e.target.value); setPage(0); }}
-              className="form-input"
-              style={{ padding: '6px 12px', fontSize: '0.85rem', cursor: 'pointer' }}
-            >
-              <option value="firstName">First Name</option>
-              <option value="lastName">Last Name</option>
-              <option value="company">Company</option>
-            </select>
-            <button
-              className="btn btn-secondary btn-icon"
-              style={{ padding: '6px 10px' }}
-              onClick={() => { setSortDir(sortDir === 'asc' ? 'desc' : 'asc'); setPage(0); }}
-            >
-              {sortDir === 'asc' ? 'ASC' : 'DESC'}
-            </button>
+          <div className="sort-container">
+            <span className="sort-label-text">Sort by:</span>
+            <div className="sort-controls-group">
+              <select
+                value={sortBy}
+                onChange={(e) => { setSortBy(e.target.value); setPage(0); }}
+                className="sort-select-premium"
+              >
+                <option value="firstName">First Name</option>
+                <option value="lastName">Last Name</option>
+                <option value="company">Company</option>
+              </select>
+              <button
+                type="button"
+                className="sort-dir-toggle-btn"
+                onClick={() => { setSortDir(sortDir === 'asc' ? 'desc' : 'asc'); setPage(0); }}
+                title={sortDir === 'asc' ? 'Sort Descending' : 'Sort Ascending'}
+              >
+                {sortDir === 'asc' ? <ChevronUp size={16} /> : <ChevronDown size={16} />}
+              </button>
+            </div>
           </div>
         </div>
 
