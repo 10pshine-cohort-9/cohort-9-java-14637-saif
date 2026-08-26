@@ -22,6 +22,7 @@ function PublicRoute({ children }) {
 
 export default function App() {
   const [toast, setToast] = useState(null);
+  const [theme, setTheme] = useState(localStorage.getItem('theme') || 'dark');
 
   const showToast = (message, isError = false) => {
     setToast({ message, isError });
@@ -35,6 +36,15 @@ export default function App() {
       return () => clearTimeout(timer);
     }
   }, [toast]);
+
+  useEffect(() => {
+    document.documentElement.setAttribute('data-theme', theme);
+    localStorage.setItem('theme', theme);
+  }, [theme]);
+
+  const toggleTheme = () => {
+    setTheme((prev) => (prev === 'dark' ? 'light' : 'dark'));
+  };
 
   return (
     <Router>
@@ -60,7 +70,7 @@ export default function App() {
             path="/"
             element={
               <ProtectedRoute>
-                <Dashboard onShowToast={showToast} />
+                <Dashboard onShowToast={showToast} theme={theme} toggleTheme={toggleTheme} />
               </ProtectedRoute>
             }
           />

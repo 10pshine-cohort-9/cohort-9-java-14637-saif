@@ -5,7 +5,7 @@ import Navbar from '../components/Navbar';
 import ContactModal from '../components/ContactModal';
 import ProfileModal from '../components/ProfileModal';
 
-export default function Dashboard({ onShowToast }) {
+export default function Dashboard({ onShowToast, theme, toggleTheme }) {
   const [contacts, setContacts] = useState([]);
   const [page, setPage] = useState(0);
   const [totalPages, setTotalPages] = useState(0);
@@ -163,7 +163,7 @@ export default function Dashboard({ onShowToast }) {
 
   return (
     <div className="dashboard-layout">
-      <Navbar onOpenProfile={() => setIsProfileOpen(true)} userEmail={userEmail} />
+      <Navbar onOpenProfile={() => setIsProfileOpen(true)} userEmail={userEmail} theme={theme} toggleTheme={toggleTheme} />
 
       <main className="main-content">
         <div className="panel-header">

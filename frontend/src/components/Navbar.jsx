@@ -1,7 +1,7 @@
 import React from 'react';
-import { Users, User, LogOut } from 'lucide-react';
+import { Users, User, LogOut, Sun, Moon } from 'lucide-react';
 
-export default function Navbar({ onOpenProfile, userEmail }) {
+export default function Navbar({ onOpenProfile, userEmail, theme, toggleTheme }) {
   const handleLogout = () => {
     localStorage.removeItem('token');
     localStorage.removeItem('email');
@@ -11,11 +11,14 @@ export default function Navbar({ onOpenProfile, userEmail }) {
   return (
     <nav className="navbar glass-panel" style={{ borderRadius: 0, borderTop: 'none', borderLeft: 'none', borderRight: 'none' }}>
       <div className="logo">
-        <Users size={28} style={{ color: 'var(--primary-hover)' }} />
-        <span>ContactHub</span>
+        <Users size={24} style={{ color: 'var(--primary)' }} />
+        <span>Contact<span>Hub</span></span>
       </div>
       <div className="nav-user">
         <span className="nav-username">{userEmail || 'User'}</span>
+        <button className="btn btn-secondary btn-icon" onClick={toggleTheme} title={theme === 'dark' ? 'Switch to Light Mode' : 'Switch to Dark Mode'}>
+          {theme === 'dark' ? <Sun size={18} /> : <Moon size={18} />}
+        </button>
         <button className="btn btn-secondary btn-icon" onClick={onOpenProfile} title="My Profile">
           <User size={18} />
         </button>
