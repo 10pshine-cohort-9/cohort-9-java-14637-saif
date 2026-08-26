@@ -16,8 +16,10 @@ export default function Login({ onShowToast }) {
 
     try {
       const response = await api.post('/auth/login', { email, password });
-      localStorage.setItem('token', response.data.token);
-      localStorage.setItem('email', response.data.email || email);
+      const token = response.data.accessToken;
+      const userEmail = response.data.user?.email || email;
+      localStorage.setItem('token', token);
+      localStorage.setItem('email', userEmail);
       onShowToast('Welcome back!', false);
       window.location.href = '/';
     } catch (err) {
