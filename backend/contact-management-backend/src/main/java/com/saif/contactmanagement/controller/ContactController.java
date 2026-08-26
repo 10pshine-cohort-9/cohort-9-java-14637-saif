@@ -182,4 +182,36 @@ public class ContactController {
         Page<Contact> contactsPage = contactService.searchContacts(keyword, pageable);
         return contactsPage.map(this::toResponse);
     }
+
+    @GetMapping("/export")
+    public org.springframework.http.ResponseEntity<String> exportContacts() {
+        log.info("Exporting contacts to CSV");
+        String csv = contactService.exportContactsToCsv();
+        return org.springframework.http.ResponseEntity.ok()
+                .header(org.springframework.http.HttpHeaders.CONTENT_DISPOSITION, "attachment; filename=\"contacts.csv\"")
+                .contentType(org.springframework.http.MediaType.parseMediaType("text/csv"))
+                .body(csv);
+    }
+
+    @PostMapping(value = "/import", consumes = org.springframework.http.MediaType.MULTIPART_FORM_DATA_VALUE)
+    public org.springframework.http.ResponseEntity<Map<String, Object>> importContacts(
+            @RequestParam("file") org.springframework.web.multipart.MultipartFile file
+    ) {
+        log.info("Importing contacts from CSV file: {}", file.getOriginalFilename());
+        if (file.isEmpty()) {
+            throw new org.springframework.web.server.ResponseStatusException(
+                    HttpStatus.BAD_REQUEST, "File is empty or not uploaded");
+        }
+        try {
+            String csvContent = new String(file.getBytes(), java.nio.charset.StandardCharsets.UTF_8);
+            int importedCount = contactService.importContactsFromCsv(csvContent);
+            Map<String, Object> response = new HashMap<>();
+            response.put("importedCount", importedCount);
+            return org.springframework.http.ResponseEntity.ok(response);
+        } catch (java.io.IOException e) {
+            log.error("Failed to read CSV file: ", e);
+            throw new org.springframework.web.server.ResponseStatusException(
+                    HttpStatus.INTERNAL_SERVER_ERROR, "Failed to read CSV file");
+        }
+    }
 }
