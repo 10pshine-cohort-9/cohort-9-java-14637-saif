@@ -17,4 +17,8 @@ public interface ContactService {
     void deleteContact(Long id);
 
     Page<Contact> searchContacts(String keyword, Pageable pageable);
+
+    String exportContactsToCsv();
+
+    int importContactsFromCsv(String csvContent);
 }

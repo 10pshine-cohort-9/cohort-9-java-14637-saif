@@ -12,6 +12,8 @@ public interface ContactRepository extends JpaRepository<Contact, Long> {
 
     Page<Contact> findByUserId(Long userId, Pageable pageable);
 
+    java.util.List<Contact> findByUserId(Long userId);
+
     @Query("SELECT c FROM Contact c WHERE c.user.id = :userId AND " +
            "(LOWER(c.firstName) LIKE LOWER(CONCAT('%', :keyword, '%')) OR " +
            "LOWER(c.lastName) LIKE LOWER(CONCAT('%', :keyword, '%')))")

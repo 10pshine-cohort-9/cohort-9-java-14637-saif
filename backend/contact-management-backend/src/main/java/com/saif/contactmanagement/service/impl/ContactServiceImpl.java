@@ -5,6 +5,7 @@ import com.saif.contactmanagement.entity.User;
 import com.saif.contactmanagement.exception.ResourceNotFoundException;
 import com.saif.contactmanagement.repository.ContactRepository;
 import com.saif.contactmanagement.service.ContactService;
+import com.saif.contactmanagement.util.CsvHelper;
 
 import org.springframework.security.core.Authentication;
 import org.springframework.security.core.context.SecurityContextHolder;
@@ -15,6 +16,9 @@ import com.saif.contactmanagement.security.CurrentUserProvider;
 import org.springframework.transaction.annotation.Transactional;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
+import java.util.List;
+import org.springframework.http.HttpStatus;
+import org.springframework.web.server.ResponseStatusException;
 
 @Service
 public class ContactServiceImpl implements ContactService {
@@ -98,5 +102,38 @@ public class ContactServiceImpl implements ContactService {
     public Page<Contact> searchContacts(String keyword, Pageable pageable) {
         User currentUser = currentUserProvider.getCurrentUser();
         return contactRepository.searchByUserIdAndKeyword(currentUser.getId(), keyword, pageable);
+    }
+
+    @Override
+    public String exportContactsToCsv() {
+        User currentUser = currentUserProvider.getCurrentUser();
+        List<Contact> contacts = contactRepository.findByUserId(currentUser.getId());
+        return CsvHelper.contactsToCsv(contacts);
+    }
+
+    @Override
+    @Transactional
+    public int importContactsFromCsv(String csvContent) {
+        User currentUser = currentUserProvider.getCurrentUser();
+        List<Contact> contacts = CsvHelper.csvToContacts(csvContent);
+        if (contacts.isEmpty()) {
+            return 0;
+        }
+
+        for (Contact contact : contacts) {
+            if (contact.getFirstName() == null || contact.getFirstName().isBlank()) {
+                throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "First name is required for all imported contacts");
+            }
+            if (contact.getLastName() == null || contact.getLastName().isBlank()) {
+                throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "Last name is required for all imported contacts");
+            }
+            if (contact.getFirstName().length() > 50 || contact.getLastName().length() > 50) {
+                throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "First name and last name must not exceed 50 characters");
+            }
+            contact.setUser(currentUser);
+        }
+
+        contactRepository.saveAll(contacts);
+        return contacts.size();
     }
 }
