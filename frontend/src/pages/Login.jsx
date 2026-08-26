@@ -34,10 +34,10 @@ export default function Login({ onShowToast }) {
     <div className="auth-container">
       <div className="auth-card glass-panel">
         <div className="auth-header">
-          <div style={{ display: 'inline-flex', padding: '12px', background: 'rgba(139, 92, 246, 0.1)', borderRadius: '12px', marginBottom: '15px' }}>
+          <div style={{ display: 'inline-flex', padding: '12px', background: 'rgba(250, 204, 21, 0.08)', borderRadius: '12px', marginBottom: '15px' }}>
             <Users size={32} style={{ color: 'var(--primary)' }} />
           </div>
-          <h1>ContactHub</h1>
+          <h1>Contact<span>Hub</span></h1>
           <p>Sign in to manage your contacts list</p>
         </div>
 
