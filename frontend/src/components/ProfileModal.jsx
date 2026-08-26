@@ -100,30 +100,20 @@ export default function ProfileModal({ isOpen, onClose, onShowToast }) {
         </div>
 
         {/* Tab Selection */}
-        <div style={{ display: 'flex', gap: '15px', borderBottom: '1px solid var(--glass-border)', marginBottom: '25px', paddingBottom: '10px' }}>
+        <div className="modal-tabs">
           <button
-            className="btn"
-            style={{
-              background: activeTab === 'details' ? 'rgba(139, 92, 246, 0.15)' : 'none',
-              border: 'none',
-              color: activeTab === 'details' ? 'var(--primary-hover)' : 'var(--text-secondary)',
-              padding: '8px 16px'
-            }}
+            className={`modal-tab-btn ${activeTab === 'details' ? 'active' : ''}`}
             onClick={() => setActiveTab('details')}
+            type="button"
           >
-            <UserIcon size={18} /> Profile Details
+            <UserIcon size={16} /> Profile Details
           </button>
           <button
-            className="btn"
-            style={{
-              background: activeTab === 'password' ? 'rgba(139, 92, 246, 0.15)' : 'none',
-              border: 'none',
-              color: activeTab === 'password' ? 'var(--primary-hover)' : 'var(--text-secondary)',
-              padding: '8px 16px'
-            }}
+            className={`modal-tab-btn ${activeTab === 'password' ? 'active' : ''}`}
             onClick={() => setActiveTab('password')}
+            type="button"
           >
-            <Lock size={18} /> Change Password
+            <Lock size={16} /> Change Password
           </button>
         </div>
 
