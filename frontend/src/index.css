@@ -1,4 +1,4 @@
-@import url('https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;500;600;700&display=swap');
+@import 'https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;500;600;700&display=swap';
 
 :root {
   --font-family: 'Outfit', sans-serif;
@@ -65,7 +65,7 @@ body {
 }
 
 /* Animations */
-@keyframes slideUp {
+@keyframes slide-up {
   from {
     transform: translateY(16px);
     opacity: 0;
@@ -76,7 +76,7 @@ body {
   }
 }
 
-@keyframes fadeIn {
+@keyframes fade-in {
   from {
     opacity: 0;
   }
@@ -120,7 +120,7 @@ body {
   border-radius: var(--border-radius);
   box-shadow: var(--card-shadow);
   border-top: 4px solid var(--primary);
-  animation: slideUp 0.35s cubic-bezier(0.16, 1, 0.3, 1) forwards;
+  animation: slide-up 0.35s cubic-bezier(0.16, 1, 0.3, 1) forwards;
 }
 
 .auth-header {
@@ -362,7 +362,7 @@ select option {
   max-width: 1200px;
   width: 100%;
   margin: 0 auto;
-  animation: fadeIn 0.3s ease-out;
+  animation: fade-in 0.3s ease-out;
 }
 
 .dashboard-header {
@@ -520,7 +520,7 @@ select option {
   justify-content: center;
   z-index: 1000;
   padding: 24px;
-  animation: fadeIn 0.2s ease-out;
+  animation: fade-in 0.2s ease-out;
 }
 
 .modal-content {
@@ -534,7 +534,7 @@ select option {
   padding: 36px;
   border-top: 4px solid var(--primary);
   border-radius: var(--border-radius);
-  animation: slideUp 0.3s cubic-bezier(0.16, 1, 0.3, 1) forwards;
+  animation: slide-up 0.3s cubic-bezier(0.16, 1, 0.3, 1) forwards;
 }
 
 .modal-header {
