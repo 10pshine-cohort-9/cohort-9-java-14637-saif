@@ -29,6 +29,7 @@ import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.Mockito.*;
 
 @ExtendWith(MockitoExtension.class)
+@SuppressWarnings("ResultOfMethodCallIgnored")
 class UserServiceImplTest {
 
     private static final String USER_EMAIL = "john.doe@example.com";
@@ -187,6 +188,54 @@ class UserServiceImplTest {
         when(passwordEncoder.matches("wrongOldPassword", ENCODED_PASSWORD)).thenReturn(false);
 
         Exception exception = assertThrows(BadCredentialsException.class, () -> userService.changePassword(1L, "wrongOldPassword", NEW_PASSWORD));
+        assertNotNull(exception);
+        verify(userRepository, never()).save(any(User.class));
+    }
+
+    // --- Profile Tests ---
+
+    @Test
+    void shouldGetProfileSuccessfully() {
+        when(userRepository.findById(1L)).thenReturn(Optional.of(user));
+
+        UserResponse response = userService.getProfile(1L);
+
+        assertNotNull(response);
+        assertEquals(user.getId(), response.getId());
+        assertEquals(user.getFirstName(), response.getFirstName());
+        assertEquals(user.getLastName(), response.getLastName());
+    }
+
+    @Test
+    void shouldRejectGetProfileWhenUserNotFound() {
+        when(userRepository.findById(999L)).thenReturn(Optional.empty());
+
+        Throwable exception = assertThrows(UsernameNotFoundException.class, () -> userService.getProfile(999L));
+        assertNotNull(exception);
+    }
+
+    @Test
+    void shouldUpdateProfileSuccessfully() {
+        com.saif.contactmanagement.dto.request.UserProfileRequest request = 
+                new com.saif.contactmanagement.dto.request.UserProfileRequest("Jane", "Smith", "9876543210");
+        when(userRepository.findById(1L)).thenReturn(Optional.of(user));
+        when(userRepository.save(any(User.class))).thenReturn(user);
+
+        UserResponse response = userService.updateProfile(1L, request);
+
+        assertNotNull(response);
+        assertEquals("Jane", user.getFirstName());
+        assertEquals("Smith", user.getLastName());
+        assertEquals("9876543210", user.getPhoneNumber());
+    }
+
+    @Test
+    void shouldRejectUpdateProfileWhenUserNotFound() {
+        com.saif.contactmanagement.dto.request.UserProfileRequest request = 
+                new com.saif.contactmanagement.dto.request.UserProfileRequest("Jane", "Smith", "9876543210");
+        when(userRepository.findById(999L)).thenReturn(Optional.empty());
+
+        Throwable exception = assertThrows(UsernameNotFoundException.class, () -> userService.updateProfile(999L, request));
         assertNotNull(exception);
         verify(userRepository, never()).save(any(User.class));
     }

@@ -17,6 +17,9 @@ import org.springframework.web.filter.OncePerRequestFilter;
 
 import java.io.IOException;
 
+import lombok.extern.slf4j.Slf4j;
+
+@Slf4j
 @Component
 public class JwtAuthenticationFilter extends OncePerRequestFilter {
 
@@ -49,6 +52,7 @@ public class JwtAuthenticationFilter extends OncePerRequestFilter {
         try {
             userEmail = jwtService.extractUsername(jwt);
         } catch (Exception e) {
+            log.warn("JWT token extraction failed. Event: JWT_EXTRACT_FAIL, ExceptionType: {}", e.getClass().getSimpleName());
             // If token parsing/extraction fails, continue filter chain (request will fail on authorization check)
             filterChain.doFilter(request, response);
             return;
@@ -68,8 +72,11 @@ public class JwtAuthenticationFilter extends OncePerRequestFilter {
                             new WebAuthenticationDetailsSource().buildDetails(request)
                     );
                     SecurityContextHolder.getContext().setAuthentication(authToken);
+                } else {
+                    log.warn("JWT token is invalid or expired. Event: JWT_INVALID");
                 }
             } catch (UsernameNotFoundException e) {
+                log.warn("User from JWT not found. Event: JWT_USER_NOT_FOUND, ExceptionType: {}", e.getClass().getSimpleName());
                 SecurityContextHolder.clearContext();
             }
         }

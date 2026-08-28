@@ -21,6 +21,8 @@ import org.springframework.stereotype.Service;
 @Service
 public class UserServiceImpl implements UserService {
 
+    private static final String USER_NOT_FOUND = "User not found";
+
     private final UserRepository userRepository;
     private final BCryptPasswordEncoder passwordEncoder;
     private final AuthenticationManager authenticationManager;
@@ -109,7 +111,7 @@ public class UserServiceImpl implements UserService {
                                String oldPassword,
                                String newPassword) {
         User user = userRepository.findById(userId)
-                .orElseThrow(() -> new UsernameNotFoundException("User not found"));
+                .orElseThrow(() -> new UsernameNotFoundException(USER_NOT_FOUND));
 
         if (!passwordEncoder.matches(oldPassword, user.getPassword())) {
             throw new BadCredentialsException("Incorrect old password");
@@ -118,5 +120,38 @@ public class UserServiceImpl implements UserService {
         user.setPassword(passwordEncoder.encode(newPassword));
         user.setCredentialVersion(user.getCredentialVersion() + 1);
         userRepository.save(user);
+    }
+
+    @Override
+    public UserResponse getProfile(Long userId) {
+        User user = userRepository.findById(userId)
+                .orElseThrow(() -> new UsernameNotFoundException(USER_NOT_FOUND));
+        return new UserResponse(
+                user.getId(),
+                user.getFirstName(),
+                user.getLastName(),
+                user.getPhoneNumber(),
+                user.getEmail()
+        );
+    }
+
+    @Override
+    public UserResponse updateProfile(Long userId, com.saif.contactmanagement.dto.request.UserProfileRequest request) {
+        User user = userRepository.findById(userId)
+                .orElseThrow(() -> new UsernameNotFoundException(USER_NOT_FOUND));
+
+        user.setFirstName(request.getFirstName());
+        user.setLastName(request.getLastName());
+        user.setPhoneNumber(request.getPhoneNumber());
+
+        User savedUser = userRepository.save(user);
+
+        return new UserResponse(
+                savedUser.getId(),
+                savedUser.getFirstName(),
+                savedUser.getLastName(),
+                savedUser.getPhoneNumber(),
+                savedUser.getEmail()
+        );
     }
 }

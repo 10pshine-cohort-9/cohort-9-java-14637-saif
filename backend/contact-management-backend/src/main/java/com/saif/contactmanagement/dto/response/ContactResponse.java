@@ -1,0 +1,31 @@
+package com.saif.contactmanagement.dto.response;
+
+import lombok.AllArgsConstructor;
+import lombok.Builder;
+import lombok.Getter;
+import lombok.NoArgsConstructor;
+import lombok.Setter;
+import java.util.Map;
+
+@Getter
+@Setter
+@NoArgsConstructor
+@AllArgsConstructor
+@Builder
+public class ContactResponse {
+
+    private Long id;
+    private String firstName;
+    private String lastName;
+    private String title;
+    private String email;
+    private String phoneNumber;
+    private String company;
+    private String address;
+    private String notes;
+    private Boolean favorite;
+    private Long userId;
+
+    private Map<String, String> emails;
+    private Map<String, String> phoneNumbers;
+}

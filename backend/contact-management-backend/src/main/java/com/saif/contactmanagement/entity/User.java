@@ -33,7 +33,7 @@ public class User {
     @Column(nullable = false)
     private String password;
 
-    @Column(nullable = false)
+    @Column(nullable = false, columnDefinition = "int default 1")
     @Builder.Default
     private int credentialVersion = 1;
 
@@ -41,3 +41,4 @@ public class User {
     private List<Contact> contacts;
 
 }
+
