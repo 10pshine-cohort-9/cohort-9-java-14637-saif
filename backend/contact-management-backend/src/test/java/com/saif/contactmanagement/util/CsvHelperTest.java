@@ -105,6 +105,16 @@ class CsvHelperTest {
     }
 
     @Test
+    void testCsvToContacts_WithUTF8BOM() {
+        String csv = "\uFEFFfirstName,lastName,title,email,phoneNumber,company,address,notes,favorite,emails,phoneNumbers\n"
+                + "Alice,Smith,Ms.,alice@example.com,+123,Company,Address,Notes,false,{},{}\n";
+        List<Contact> contacts = CsvHelper.csvToContacts(csv);
+        assertEquals(1, contacts.size());
+        assertEquals("Alice", contacts.get(0).getFirstName());
+        assertEquals("Smith", contacts.get(0).getLastName());
+    }
+
+    @Test
     void testDeserializeMap_Malformed() {
         String csv = "firstName,lastName,title,email,phoneNumber,company,address,notes,favorite,emails,phoneNumbers\n"
                 + "Alice,,,,,,,,,malformed_json_here,phone\n";

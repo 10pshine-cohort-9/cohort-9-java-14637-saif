@@ -42,6 +42,10 @@ public class CsvHelper {
             return contacts;
         }
 
+        if (csvContent.startsWith("\uFEFF")) {
+            csvContent = csvContent.substring(1);
+        }
+
         try {
             org.apache.commons.csv.CSVFormat csvFormat = org.apache.commons.csv.CSVFormat.DEFAULT.builder()
                     .setHeader()

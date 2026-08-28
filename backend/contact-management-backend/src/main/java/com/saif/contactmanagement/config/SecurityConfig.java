@@ -90,10 +90,7 @@ public class SecurityConfig {
                         .csrfTokenRepository(CookieCsrfTokenRepository.withHttpOnlyFalse())
                         .csrfTokenRequestHandler(csrfRequestHandler)
                         // Login/register happen before the client has a CSRF cookie, so they are exempt.
-                        // Logout is also exempt: it only clears a cookie (no sensitive state change), and
-                        // requiring a token here risks a stale/missing XSRF cookie silently leaving the
-                        // server-side session cookie uncleared.
-                        .ignoringRequestMatchers("/api/auth/login", "/api/auth/register", "/api/auth/logout"))
+                        .ignoringRequestMatchers("/api/auth/login", "/api/auth/register"))
                 .addFilterAfter(new CsrfCookieFilter(), BasicAuthenticationFilter.class)
                 .exceptionHandling(exception -> exception
                         .authenticationEntryPoint((request, response, authException) -> {
