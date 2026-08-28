@@ -1,6 +1,7 @@
 import React, { useState, useEffect, useRef } from 'react';
 import { Search, Plus, Upload, Download, Trash2, Edit, ChevronLeft, ChevronRight, UserPlus, Star, Users, User, LogOut, Sun, Moon, Mail, Phone, MapPin, ChevronDown, ChevronUp } from 'lucide-react';
 import api, { logout } from '../services/api';
+import { safeStorage } from '../utils/safeStorage';
 import ContactModal from '../components/ContactModal';
 import ProfileModal from '../components/ProfileModal';
 
@@ -37,10 +38,11 @@ export default function Dashboard({ onShowToast, theme, toggleTheme }) {
   const [isProfileOpen, setIsProfileOpen] = useState(false);
 
   const fileInputRef = useRef(null);
-  const userEmail = localStorage.getItem('email') || 'User';
+  const userEmail = safeStorage.getItem('email') || 'User';
 
   const searchTimeoutRef = useRef(null);
   const activeSearchQueryRef = useRef('');
+  const skipNextPageEffectRef = useRef(false);
 
   useEffect(() => {
     return () => {
@@ -51,6 +53,12 @@ export default function Dashboard({ onShowToast, theme, toggleTheme }) {
   }, []);
 
   useEffect(() => {
+    // Search already resets page to 0 and schedules its own debounced fetch below;
+    // skip the redundant, un-debounced fetch that this page-change would otherwise trigger.
+    if (skipNextPageEffectRef.current) {
+      skipNextPageEffectRef.current = false;
+      return;
+    }
     fetchContacts();
   }, [page, sortBy, sortDir]);
 
@@ -90,6 +98,9 @@ export default function Dashboard({ onShowToast, theme, toggleTheme }) {
   const handleSearchChange = (e) => {
     const val = e.target.value;
     setSearchQuery(val);
+    if (page !== 0) {
+      skipNextPageEffectRef.current = true;
+    }
     setPage(0);
 
     if (searchTimeoutRef.current) {

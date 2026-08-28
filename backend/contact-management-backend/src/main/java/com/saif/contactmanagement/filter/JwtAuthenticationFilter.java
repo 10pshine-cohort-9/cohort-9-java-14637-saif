@@ -85,8 +85,9 @@ public class JwtAuthenticationFilter extends OncePerRequestFilter {
     }
 
     /**
-     * Resolves the JWT from the HttpOnly access-token cookie, falling back to the
-     * Authorization header for non-browser API clients.
+     * Resolves the JWT from the HttpOnly access-token cookie only. A header-based fallback is
+     * intentionally not supported: it would let a token exfiltrated through any other channel be
+     * replayed without a cookie, bypassing both HttpOnly protection and CSRF enforcement.
      */
     private String resolveToken(HttpServletRequest request) {
         Cookie[] cookies = request.getCookies();
@@ -97,12 +98,6 @@ public class JwtAuthenticationFilter extends OncePerRequestFilter {
                 }
             }
         }
-
-        final String authHeader = request.getHeader("Authorization");
-        if (authHeader != null && authHeader.startsWith("Bearer ")) {
-            return authHeader.substring(7);
-        }
-
         return null;
     }
 }

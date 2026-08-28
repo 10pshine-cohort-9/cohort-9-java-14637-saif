@@ -59,9 +59,13 @@ class JwtAuthenticationFilterTest {
         SecurityContextHolder.clearContext();
     }
 
+    private static Cookie[] accessTokenCookie(String token) {
+        return new Cookie[]{new Cookie(JwtAuthenticationFilter.ACCESS_TOKEN_COOKIE_NAME, token)};
+    }
+
     @Test
-    void shouldContinueFilterChainWhenNoAuthHeader() throws ServletException, IOException {
-        when(request.getHeader(AUTH_HEADER)).thenReturn(null);
+    void shouldContinueFilterChainWhenNoCookies() throws ServletException, IOException {
+        when(request.getCookies()).thenReturn(null);
 
         jwtAuthenticationFilter.doFilterInternal(request, response, filterChain);
 
@@ -70,18 +74,31 @@ class JwtAuthenticationFilterTest {
     }
 
     @Test
-    void shouldContinueFilterChainWhenHeaderDoesNotStartWithBearer() throws ServletException, IOException {
-        when(request.getHeader(AUTH_HEADER)).thenReturn("Basic credentials");
+    void shouldContinueFilterChainWhenAccessTokenCookieMissing() throws ServletException, IOException {
+        when(request.getCookies()).thenReturn(new Cookie[]{new Cookie("other", "value")});
 
         jwtAuthenticationFilter.doFilterInternal(request, response, filterChain);
 
         assertNull(SecurityContextHolder.getContext().getAuthentication());
+        verify(filterChain).doFilter(request, response);
+    }
+
+    @Test
+    void shouldIgnoreAuthorizationHeaderWithoutAccessTokenCookie() throws ServletException, IOException {
+        // The Authorization header is no longer a supported token source; only the HttpOnly cookie is.
+        when(request.getCookies()).thenReturn(null);
+
+        jwtAuthenticationFilter.doFilterInternal(request, response, filterChain);
+
+        assertNull(SecurityContextHolder.getContext().getAuthentication());
+        verify(request, never()).getHeader(AUTH_HEADER);
+        verify(jwtService, never()).extractUsername(anyString());
         verify(filterChain).doFilter(request, response);
     }
 
     @Test
     void shouldContinueFilterChainWhenTokenExtractionFails() throws ServletException, IOException {
-        when(request.getHeader(AUTH_HEADER)).thenReturn(BEARER_PREFIX + "invalid.token");
+        when(request.getCookies()).thenReturn(accessTokenCookie("invalid.token"));
         when(jwtService.extractUsername("invalid.token")).thenThrow(new RuntimeException("Parsing error"));
 
         jwtAuthenticationFilter.doFilterInternal(request, response, filterChain);
@@ -91,13 +108,13 @@ class JwtAuthenticationFilterTest {
     }
 
     @Test
-    void shouldPopulateSecurityContextWhenTokenIsValid() throws ServletException, IOException {
+    void shouldPopulateSecurityContextFromAccessTokenCookie() throws ServletException, IOException {
         String token = VALID_TOKEN;
         String email = USER_EMAIL;
         UserDetails userDetails = mock(UserDetails.class);
         when(userDetails.getAuthorities()).thenReturn(Collections.emptyList());
 
-        when(request.getHeader(AUTH_HEADER)).thenReturn(BEARER_PREFIX + token);
+        when(request.getCookies()).thenReturn(accessTokenCookie(token));
         when(jwtService.extractUsername(token)).thenReturn(email);
         when(userDetailsService.loadUserByUsername(email)).thenReturn(userDetails);
         when(jwtService.isTokenValid(token, userDetails)).thenReturn(true);
@@ -115,7 +132,7 @@ class JwtAuthenticationFilterTest {
         String email = USER_EMAIL;
         UserDetails userDetails = mock(UserDetails.class);
 
-        when(request.getHeader(AUTH_HEADER)).thenReturn(BEARER_PREFIX + token);
+        when(request.getCookies()).thenReturn(accessTokenCookie(token));
         when(jwtService.extractUsername(token)).thenReturn(email);
         when(userDetailsService.loadUserByUsername(email)).thenReturn(userDetails);
         when(jwtService.isTokenValid(token, userDetails)).thenReturn(false);
@@ -133,7 +150,7 @@ class JwtAuthenticationFilterTest {
         org.springframework.security.core.Authentication existingAuth = mock(org.springframework.security.core.Authentication.class);
         SecurityContextHolder.getContext().setAuthentication(existingAuth);
 
-        when(request.getHeader(AUTH_HEADER)).thenReturn(BEARER_PREFIX + token);
+        when(request.getCookies()).thenReturn(accessTokenCookie(token));
         when(jwtService.extractUsername(token)).thenReturn(email);
 
         jwtAuthenticationFilter.doFilterInternal(request, response, filterChain);
@@ -146,7 +163,7 @@ class JwtAuthenticationFilterTest {
     void shouldNotAuthenticateWhenUserEmailIsNull() throws ServletException, IOException {
         String token = VALID_TOKEN;
 
-        when(request.getHeader(AUTH_HEADER)).thenReturn(BEARER_PREFIX + token);
+        when(request.getCookies()).thenReturn(accessTokenCookie(token));
         when(jwtService.extractUsername(token)).thenReturn(null);
 
         jwtAuthenticationFilter.doFilterInternal(request, response, filterChain);
@@ -156,32 +173,11 @@ class JwtAuthenticationFilterTest {
     }
 
     @Test
-    void shouldPopulateSecurityContextFromAccessTokenCookie() throws ServletException, IOException {
-        String token = VALID_TOKEN;
-        String email = USER_EMAIL;
-        UserDetails userDetails = mock(UserDetails.class);
-        when(userDetails.getAuthorities()).thenReturn(Collections.emptyList());
-
-        when(request.getCookies()).thenReturn(new Cookie[]{
-                new Cookie(JwtAuthenticationFilter.ACCESS_TOKEN_COOKIE_NAME, token)
-        });
-        when(jwtService.extractUsername(token)).thenReturn(email);
-        when(userDetailsService.loadUserByUsername(email)).thenReturn(userDetails);
-        when(jwtService.isTokenValid(token, userDetails)).thenReturn(true);
-
-        jwtAuthenticationFilter.doFilterInternal(request, response, filterChain);
-
-        assertNotNull(SecurityContextHolder.getContext().getAuthentication());
-        assertEquals(userDetails, SecurityContextHolder.getContext().getAuthentication().getPrincipal());
-        verify(filterChain).doFilter(request, response);
-    }
-
-    @Test
     void shouldHandleUsernameNotFoundExceptionGracefully() throws ServletException, IOException {
         String token = VALID_TOKEN;
         String email = USER_EMAIL;
 
-        when(request.getHeader(AUTH_HEADER)).thenReturn(BEARER_PREFIX + token);
+        when(request.getCookies()).thenReturn(accessTokenCookie(token));
         when(jwtService.extractUsername(token)).thenReturn(email);
         when(userDetailsService.loadUserByUsername(email)).thenThrow(new org.springframework.security.core.userdetails.UsernameNotFoundException("Deleted user"));
 

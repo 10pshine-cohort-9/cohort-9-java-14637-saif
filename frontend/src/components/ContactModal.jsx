@@ -103,38 +103,38 @@ export default function ContactModal({ isOpen, onClose, contactId, onSaveSuccess
     setErrors({});
 
     // Validate labeled fields labels aren't empty
-    const emailsMap = {};
+    const emailsMap = new Map();
     for (const item of emailsList) {
       const trimmedLabel = item.label.trim();
       if (!trimmedLabel) {
         setErrors({ emails: 'Email labels are required' });
         return;
       }
-      if (emailsMap.hasOwnProperty(trimmedLabel)) {
+      if (emailsMap.has(trimmedLabel)) {
         setErrors({ emails: 'Duplicate email labels are not allowed' });
         return;
       }
-      emailsMap[trimmedLabel] = item.value.trim();
+      emailsMap.set(trimmedLabel, item.value.trim());
     }
 
-    const phonesMap = {};
+    const phonesMap = new Map();
     for (const item of phonesList) {
       const trimmedLabel = item.label.trim();
       if (!trimmedLabel) {
         setErrors({ phoneNumbers: 'Phone labels are required' });
         return;
       }
-      if (phonesMap.hasOwnProperty(trimmedLabel)) {
+      if (phonesMap.has(trimmedLabel)) {
         setErrors({ phoneNumbers: 'Duplicate phone labels are not allowed' });
         return;
       }
-      phonesMap[trimmedLabel] = item.value.trim();
+      phonesMap.set(trimmedLabel, item.value.trim());
     }
 
     const payload = {
       ...form,
-      emails: emailsMap,
-      phoneNumbers: phonesMap
+      emails: Object.fromEntries(emailsMap),
+      phoneNumbers: Object.fromEntries(phonesMap)
     };
 
     try {

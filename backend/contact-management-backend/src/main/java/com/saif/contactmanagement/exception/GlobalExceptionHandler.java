@@ -81,6 +81,21 @@ public class GlobalExceptionHandler extends ResponseEntityExceptionHandler {
         return new ResponseEntity<>(response, status);
     }
 
+    @ExceptionHandler(IllegalArgumentException.class)
+    public ResponseEntity<Map<String, Object>> handleIllegalArgument(IllegalArgumentException ex) {
+
+        log.warn("Illegal argument exception: {}", ex.getMessage());
+
+        Map<String, Object> response = new HashMap<>();
+
+        response.put(TIMESTAMP_KEY, LocalDateTime.now(ZoneId.systemDefault()));
+        response.put(STATUS_KEY, HttpStatus.BAD_REQUEST.value());
+        response.put(ERROR_KEY, HttpStatus.BAD_REQUEST.getReasonPhrase());
+        response.put(MESSAGE_KEY, ex.getMessage());
+
+        return new ResponseEntity<>(response, HttpStatus.BAD_REQUEST);
+    }
+
     @ExceptionHandler(org.springframework.security.core.AuthenticationException.class)
     public ResponseEntity<Map<String, Object>> handleAuthenticationException(
             org.springframework.security.core.AuthenticationException ex) {

@@ -1,7 +1,13 @@
 import axios from 'axios';
+import { safeStorage } from '../utils/safeStorage';
 
 export const EMAIL_KEY = 'email';
 export const AUTH_FLAG_KEY = 'isAuthenticated';
+
+const clearAuthState = () => {
+  safeStorage.removeItem(EMAIL_KEY);
+  safeStorage.removeItem(AUTH_FLAG_KEY);
+};
 
 export const logout = async () => {
   try {
@@ -9,8 +15,7 @@ export const logout = async () => {
   } catch (e) {
     // Best-effort: proceed with local cleanup even if the request fails.
   }
-  localStorage.removeItem(EMAIL_KEY);
-  localStorage.removeItem(AUTH_FLAG_KEY);
+  clearAuthState();
   window.location.href = '/login';
 };
 
@@ -29,8 +34,7 @@ api.interceptors.response.use(
       const url = error.config && error.config.url ? String(error.config.url).toLowerCase() : '';
       const isAuthRequest = url && (url.includes('/auth/login') || url.includes('/auth/register'));
       if (!isAuthRequest) {
-        localStorage.removeItem(EMAIL_KEY);
-        localStorage.removeItem(AUTH_FLAG_KEY);
+        clearAuthState();
         window.location.href = '/login';
       }
     }

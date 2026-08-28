@@ -2,6 +2,7 @@ import React, { useState } from 'react';
 import { Link } from 'react-router-dom';
 import { Mail, Lock, Users } from 'lucide-react';
 import api, { AUTH_FLAG_KEY, EMAIL_KEY } from '../services/api';
+import { safeStorage } from '../utils/safeStorage';
 
 export default function Login({ onShowToast }) {
   const [email, setEmail] = useState('');
@@ -18,8 +19,8 @@ export default function Login({ onShowToast }) {
       const response = await api.post('/auth/login', { email, password });
       // The access token is set as an HttpOnly cookie by the server; it is never exposed to JS.
       const userEmail = response.data.user?.email || email;
-      localStorage.setItem(EMAIL_KEY, userEmail);
-      localStorage.setItem(AUTH_FLAG_KEY, 'true');
+      safeStorage.setItem(EMAIL_KEY, userEmail);
+      safeStorage.setItem(AUTH_FLAG_KEY, 'true');
       onShowToast('Welcome back!', false);
       window.location.href = '/';
     } catch (err) {
