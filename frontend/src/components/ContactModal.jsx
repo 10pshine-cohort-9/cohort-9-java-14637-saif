@@ -80,7 +80,7 @@ export default function ContactModal({ isOpen, onClose, contactId, onSaveSuccess
 
   const handleEmailChange = (index, field, value) => {
     const updated = [...emailsList];
-    updated[index][field] = value;
+    updated[index] = { ...updated[index], [field]: value };
     setEmailsList(updated);
   };
 
@@ -94,7 +94,7 @@ export default function ContactModal({ isOpen, onClose, contactId, onSaveSuccess
 
   const handlePhoneChange = (index, field, value) => {
     const updated = [...phonesList];
-    updated[index][field] = value;
+    updated[index] = { ...updated[index], [field]: value };
     setPhonesList(updated);
   };
 
@@ -105,20 +105,30 @@ export default function ContactModal({ isOpen, onClose, contactId, onSaveSuccess
     // Validate labeled fields labels aren't empty
     const emailsMap = {};
     for (const item of emailsList) {
-      if (!item.label.trim()) {
+      const trimmedLabel = item.label.trim();
+      if (!trimmedLabel) {
         setErrors({ emails: 'Email labels are required' });
         return;
       }
-      emailsMap[item.label.trim()] = item.value.trim();
+      if (emailsMap.hasOwnProperty(trimmedLabel)) {
+        setErrors({ emails: 'Duplicate email labels are not allowed' });
+        return;
+      }
+      emailsMap[trimmedLabel] = item.value.trim();
     }
 
     const phonesMap = {};
     for (const item of phonesList) {
-      if (!item.label.trim()) {
+      const trimmedLabel = item.label.trim();
+      if (!trimmedLabel) {
         setErrors({ phoneNumbers: 'Phone labels are required' });
         return;
       }
-      phonesMap[item.label.trim()] = item.value.trim();
+      if (phonesMap.hasOwnProperty(trimmedLabel)) {
+        setErrors({ phoneNumbers: 'Duplicate phone labels are not allowed' });
+        return;
+      }
+      phonesMap[trimmedLabel] = item.value.trim();
     }
 
     const payload = {

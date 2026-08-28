@@ -42,41 +42,53 @@ public class CsvHelper {
             return contacts;
         }
 
-        List<List<String>> records = parseCsv(csvContent);
-        if (records.isEmpty()) {
-            return contacts;
-        }
+        try {
+            org.apache.commons.csv.CSVFormat csvFormat = org.apache.commons.csv.CSVFormat.DEFAULT.builder()
+                    .setHeader()
+                    .setSkipHeaderRecord(true)
+                    .setTrim(true)
+                    .build();
 
-        // First record is header, so start from index 1
-        for (int i = 1; i < records.size(); i++) {
-            List<String> fields = records.get(i);
-            if (fields.isEmpty() || (fields.size() == 1 && fields.get(0).isBlank())) {
-                continue;
+            org.apache.commons.csv.CSVParser parser = org.apache.commons.csv.CSVParser.parse(csvContent, csvFormat);
+            List<org.apache.commons.csv.CSVRecord> records;
+            try {
+                records = parser.getRecords();
+            } catch (Exception e) {
+                throw new IllegalArgumentException("Malformed CSV: Failed to parse records", e);
             }
 
-            Contact contact = new Contact();
-            contact.setFirstName(getField(fields, 0));
-            contact.setLastName(getField(fields, 1));
-            contact.setTitle(getField(fields, 2));
-            contact.setEmail(getField(fields, 3));
-            contact.setPhoneNumber(getField(fields, 4));
-            contact.setCompany(getField(fields, 5));
-            contact.setAddress(getField(fields, 6));
-            contact.setNotes(getField(fields, 7));
-            contact.setFavorite(Boolean.parseBoolean(getField(fields, 8)));
-            contact.setEmails(deserializeMap(getField(fields, 9)));
-            contact.setPhoneNumbers(deserializeMap(getField(fields, 10)));
+            for (org.apache.commons.csv.CSVRecord record : records) {
+                // Skip empty lines
+                if (record.size() == 0 || (record.size() == 1 && (record.get(0) == null || record.get(0).isBlank()))) {
+                    continue;
+                }
 
-            contacts.add(contact);
+                Contact contact = new Contact();
+                contact.setFirstName(getRecordField(record, "firstName"));
+                contact.setLastName(getRecordField(record, "lastName"));
+                contact.setTitle(getRecordField(record, "title"));
+                contact.setEmail(getRecordField(record, "email"));
+                contact.setPhoneNumber(getRecordField(record, "phoneNumber"));
+                contact.setCompany(getRecordField(record, "company"));
+                contact.setAddress(getRecordField(record, "address"));
+                contact.setNotes(getRecordField(record, "notes"));
+                contact.setFavorite(Boolean.parseBoolean(getRecordField(record, "favorite")));
+                contact.setEmails(deserializeMap(getRecordField(record, "emails")));
+                contact.setPhoneNumbers(deserializeMap(getRecordField(record, "phoneNumbers")));
+
+                contacts.add(contact);
+            }
+        } catch (Exception e) {
+            throw new IllegalArgumentException("Malformed CSV: " + e.getMessage(), e);
         }
 
         return contacts;
     }
 
-    private static String getField(List<String> fields, int index) {
-        if (index < fields.size()) {
-            String val = fields.get(index);
-            return val != null ? val.trim() : null;
+    private static String getRecordField(org.apache.commons.csv.CSVRecord record, String headerName) {
+        if (record.isMapped(headerName) && record.isSet(headerName)) {
+            String val = record.get(headerName);
+            return val != null ? val.trim() : "";
         }
         return "";
     }
@@ -91,85 +103,27 @@ public class CsvHelper {
         return field;
     }
 
-    private static String serializeMap(Map<String, String> map) {
+    private static final com.fasterxml.jackson.databind.ObjectMapper objectMapper = new com.fasterxml.jackson.databind.ObjectMapper();
+
+    static String serializeMap(Map<String, String> map) {
         if (map == null || map.isEmpty()) {
             return "";
         }
-        StringBuilder sb = new StringBuilder();
-        for (Map.Entry<String, String> entry : map.entrySet()) {
-            if (sb.length() > 0) {
-                sb.append("|");
-            }
-            sb.append(entry.getKey()).append(":").append(entry.getValue());
+        try {
+            return objectMapper.writeValueAsString(map);
+        } catch (com.fasterxml.jackson.core.JsonProcessingException e) {
+            throw new RuntimeException("Failed to serialize map to JSON", e);
         }
-        return sb.toString();
     }
 
-    private static Map<String, String> deserializeMap(String data) {
-        Map<String, String> map = new HashMap<>();
+    static Map<String, String> deserializeMap(String data) {
         if (data == null || data.isBlank()) {
-            return map;
+            return new HashMap<>();
         }
-        String[] entries = data.split("\\|");
-        for (String entry : entries) {
-            if (entry.isBlank()) {
-                continue;
-            }
-            int colonIndex = entry.indexOf(':');
-            if (colonIndex > 0) {
-                String key = entry.substring(0, colonIndex).trim();
-                String value = entry.substring(colonIndex + 1).trim();
-                map.put(key, value);
-            }
+        try {
+            return objectMapper.readValue(data, new com.fasterxml.jackson.core.type.TypeReference<Map<String, String>>() {});
+        } catch (Exception e) {
+            throw new RuntimeException("Failed to deserialize map from JSON", e);
         }
-        return map;
-    }
-
-    private static List<List<String>> parseCsv(String csvContent) {
-        List<List<String>> records = new ArrayList<>();
-        List<String> curRecord = new ArrayList<>();
-        StringBuilder curVal = new StringBuilder();
-        boolean inQuotes = false;
-
-        for (int i = 0; i < csvContent.length(); i++) {
-            char ch = csvContent.charAt(i);
-            if (inQuotes) {
-                if (ch == '\"') {
-                    if (i + 1 < csvContent.length() && csvContent.charAt(i + 1) == '\"') {
-                        curVal.append('\"');
-                        i++;
-                    } else {
-                        inQuotes = false;
-                    }
-                } else {
-                    curVal.append(ch);
-                }
-            } else {
-                if (ch == '\"') {
-                    inQuotes = true;
-                } else if (ch == ',') {
-                    curRecord.add(curVal.toString());
-                    curVal.setLength(0);
-                } else if (ch == '\n' || ch == '\r') {
-                    curRecord.add(curVal.toString());
-                    curVal.setLength(0);
-                    records.add(new ArrayList<>(curRecord));
-                    curRecord.clear();
-                    // Handle \r\n
-                    if (ch == '\r' && i + 1 < csvContent.length() && csvContent.charAt(i + 1) == '\n') {
-                        i++;
-                    }
-                } else {
-                    curVal.append(ch);
-                }
-            }
-        }
-
-        // Add the last field and record if any
-        if (curVal.length() > 0 || !curRecord.isEmpty()) {
-            curRecord.add(curVal.toString());
-            records.add(curRecord);
-        }
-        return records;
     }
 }

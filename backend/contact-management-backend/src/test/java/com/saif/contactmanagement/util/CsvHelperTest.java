@@ -98,20 +98,28 @@ class CsvHelperTest {
         assertEquals("", contacts.get(0).getLastName());
         
         assertEquals("Bob", contacts.get(1).getFirstName());
-        assertEquals("Bob", contacts.get(1).getFirstName());
         assertEquals("Smith", contacts.get(1).getLastName());
+
+        assertEquals("", contacts.get(2).getFirstName());
+        assertEquals("", contacts.get(2).getLastName());
     }
 
     @Test
     void testDeserializeMap_Malformed() {
         String csv = "firstName,lastName,title,email,phoneNumber,company,address,notes,favorite,emails,phoneNumbers\n"
-                + "Alice,,,,,,,,,malformed_no_colon|key:,phone\n";
-        List<Contact> contacts = CsvHelper.csvToContacts(csv);
-        assertEquals(1, contacts.size());
-        // For "malformed_no_colon", no colon index so it should be skipped
-        // For "key:", key = "key", value = ""
-        Map<String, String> emails = contacts.get(0).getEmails();
-        assertEquals(1, emails.size());
-        assertEquals("", emails.get("key"));
+                + "Alice,,,,,,,,,malformed_json_here,phone\n";
+        assertThrows(IllegalArgumentException.class, () -> CsvHelper.csvToContacts(csv));
+    }
+
+    @Test
+    void testMapSerialization_RoundTripWithSpecialCharacters() {
+        Map<String, String> original = new HashMap<>();
+        original.put("work|key:label", "value:with|pipes:andcolons");
+        original.put("another:key|", "value|:");
+
+        String serialized = CsvHelper.serializeMap(original);
+        Map<String, String> deserialized = CsvHelper.deserializeMap(serialized);
+
+        assertEquals(original, deserialized);
     }
 }

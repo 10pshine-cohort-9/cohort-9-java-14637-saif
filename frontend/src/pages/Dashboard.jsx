@@ -1,6 +1,6 @@
 import React, { useState, useEffect, useRef } from 'react';
 import { Search, Plus, Upload, Download, Trash2, Edit, ChevronLeft, ChevronRight, UserPlus, Star, Users, User, LogOut, Sun, Moon, Mail, Phone, MapPin, ChevronDown, ChevronUp } from 'lucide-react';
-import api from '../services/api';
+import api, { logout } from '../services/api';
 import ContactModal from '../components/ContactModal';
 import ProfileModal from '../components/ProfileModal';
 
@@ -39,11 +39,23 @@ export default function Dashboard({ onShowToast, theme, toggleTheme }) {
   const fileInputRef = useRef(null);
   const userEmail = localStorage.getItem('email') || 'User';
 
+  const searchTimeoutRef = useRef(null);
+  const activeSearchQueryRef = useRef('');
+
+  useEffect(() => {
+    return () => {
+      if (searchTimeoutRef.current) {
+        clearTimeout(searchTimeoutRef.current);
+      }
+    };
+  }, []);
+
   useEffect(() => {
     fetchContacts();
   }, [page, sortBy, sortDir]);
 
-  const fetchContacts = async (query = searchQuery) => {
+  const fetchContacts = async (query = searchQuery, requestQuery = query) => {
+    activeSearchQueryRef.current = requestQuery;
     try {
       let response;
       const params = {
@@ -61,11 +73,17 @@ export default function Dashboard({ onShowToast, theme, toggleTheme }) {
         response = await api.get('/contacts', { params });
       }
 
+      if (activeSearchQueryRef.current !== requestQuery) {
+        return; // Ignore stale response
+      }
+
       setContacts(response.data.content || []);
       setTotalPages(response.data.totalPages || 0);
       setTotalElements(response.data.totalElements || 0);
     } catch (err) {
-      onShowToast(err.response?.data?.message || 'Failed to fetch contacts', true);
+      if (activeSearchQueryRef.current === requestQuery) {
+        onShowToast(err.response?.data?.message || 'Failed to fetch contacts', true);
+      }
     }
   };
 
@@ -73,7 +91,15 @@ export default function Dashboard({ onShowToast, theme, toggleTheme }) {
     const val = e.target.value;
     setSearchQuery(val);
     setPage(0);
-    fetchContacts(val);
+
+    if (searchTimeoutRef.current) {
+      clearTimeout(searchTimeoutRef.current);
+    }
+
+    activeSearchQueryRef.current = val;
+    searchTimeoutRef.current = setTimeout(() => {
+      fetchContacts(val, val);
+    }, 300);
   };
 
   const handleDelete = async (e, id) => {
@@ -112,16 +138,34 @@ export default function Dashboard({ onShowToast, theme, toggleTheme }) {
   };
 
   const handleExport = async () => {
+    let url = null;
     try {
       const response = await api.get('/contacts/export', { responseType: 'blob' });
       const blob = new Blob([response.data], { type: 'text/csv' });
       const link = document.createElement('a');
-      link.href = window.URL.createObjectURL(blob);
+      url = window.URL.createObjectURL(blob);
+      link.href = url;
       link.download = 'contacts.csv';
       link.click();
       onShowToast('Contacts exported successfully!', false);
     } catch (err) {
-      onShowToast('Failed to export contacts', true);
+      let errMsg = 'Failed to export contacts';
+      if (err.response?.data instanceof Blob) {
+        try {
+          const text = await err.response.data.text();
+          const parsed = JSON.parse(text);
+          errMsg = parsed.message || parsed.error || errMsg;
+        } catch (e) {
+          // ignore parsing error
+        }
+      } else {
+        errMsg = err.response?.data?.message || err.response?.data?.error || errMsg;
+      }
+      onShowToast(errMsg, true);
+    } finally {
+      if (url) {
+        window.URL.revokeObjectURL(url);
+      }
     }
   };
 
@@ -160,9 +204,7 @@ export default function Dashboard({ onShowToast, theme, toggleTheme }) {
   };
 
   const handleLogout = () => {
-    localStorage.removeItem('token');
-    localStorage.removeItem('email');
-    window.location.href = '/login';
+    logout();
   };
 
   return (

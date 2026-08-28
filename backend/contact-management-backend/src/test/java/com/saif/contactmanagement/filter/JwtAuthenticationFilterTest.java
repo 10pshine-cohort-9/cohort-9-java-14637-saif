@@ -4,6 +4,7 @@ import com.saif.contactmanagement.service.impl.CustomUserDetailsService;
 import com.saif.contactmanagement.util.JwtService;
 import jakarta.servlet.FilterChain;
 import jakarta.servlet.ServletException;
+import jakarta.servlet.http.Cookie;
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
 import org.junit.jupiter.api.AfterEach;
@@ -151,6 +152,27 @@ class JwtAuthenticationFilterTest {
         jwtAuthenticationFilter.doFilterInternal(request, response, filterChain);
 
         verify(userDetailsService, never()).loadUserByUsername(anyString());
+        verify(filterChain).doFilter(request, response);
+    }
+
+    @Test
+    void shouldPopulateSecurityContextFromAccessTokenCookie() throws ServletException, IOException {
+        String token = VALID_TOKEN;
+        String email = USER_EMAIL;
+        UserDetails userDetails = mock(UserDetails.class);
+        when(userDetails.getAuthorities()).thenReturn(Collections.emptyList());
+
+        when(request.getCookies()).thenReturn(new Cookie[]{
+                new Cookie(JwtAuthenticationFilter.ACCESS_TOKEN_COOKIE_NAME, token)
+        });
+        when(jwtService.extractUsername(token)).thenReturn(email);
+        when(userDetailsService.loadUserByUsername(email)).thenReturn(userDetails);
+        when(jwtService.isTokenValid(token, userDetails)).thenReturn(true);
+
+        jwtAuthenticationFilter.doFilterInternal(request, response, filterChain);
+
+        assertNotNull(SecurityContextHolder.getContext().getAuthentication());
+        assertEquals(userDetails, SecurityContextHolder.getContext().getAuthentication().getPrincipal());
         verify(filterChain).doFilter(request, response);
     }
 

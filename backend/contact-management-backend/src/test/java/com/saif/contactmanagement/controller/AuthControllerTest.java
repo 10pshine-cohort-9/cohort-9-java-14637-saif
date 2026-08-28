@@ -91,11 +91,22 @@ class AuthControllerTest {
                         .contentType(MediaType.APPLICATION_JSON)
                         .content(objectMapper.writeValueAsString(request)))
                 .andExpect(status().isOk())
-                .andExpect(jsonPath("$.accessToken").value("dummyToken"))
+                .andExpect(jsonPath("$.accessToken").doesNotExist())
                 .andExpect(jsonPath("$.expiresIn").value(3600L))
-                .andExpect(jsonPath("$.user.email").value("john.doe@example.com"));
+                .andExpect(jsonPath("$.user.email").value("john.doe@example.com"))
+                .andExpect(cookie().exists("ACCESS_TOKEN"))
+                .andExpect(cookie().value("ACCESS_TOKEN", "dummyToken"))
+                .andExpect(cookie().httpOnly("ACCESS_TOKEN", true))
+                .andExpect(cookie().maxAge("ACCESS_TOKEN", 3600));
 
         verify(userService).login(any(LoginRequest.class));
+    }
+
+    @Test
+    void shouldClearAccessTokenCookieOnLogout() throws Exception {
+        mockMvc.perform(post("/api/auth/logout"))
+                .andExpect(status().isOk())
+                .andExpect(cookie().maxAge("ACCESS_TOKEN", 0));
     }
 
     @Test

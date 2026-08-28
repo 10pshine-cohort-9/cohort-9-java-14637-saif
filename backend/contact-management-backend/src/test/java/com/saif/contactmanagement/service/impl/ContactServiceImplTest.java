@@ -37,6 +37,8 @@ class ContactServiceImplTest {
     @Mock
     private ContactRepository contactRepository;
 
+    private final jakarta.validation.Validator validator = jakarta.validation.Validation.buildDefaultValidatorFactory().getValidator();
+
     private ContactServiceImpl contactService;
     private final CurrentUserProvider currentUserProvider = new CurrentUserProvider();
 
@@ -51,7 +53,7 @@ class ContactServiceImplTest {
 
     @BeforeEach
     void setUp() {
-        contactService = new ContactServiceImpl(contactRepository, currentUserProvider);
+        contactService = new ContactServiceImpl(contactRepository, currentUserProvider, validator);
         currentUser = User.builder()
                 .id(1L)
                 .email("user1@example.com")

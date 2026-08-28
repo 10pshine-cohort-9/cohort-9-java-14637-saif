@@ -1,11 +1,10 @@
 import React from 'react';
 import { Users, User, LogOut, Sun, Moon } from 'lucide-react';
+import { logout } from '../services/api';
 
 export default function Navbar({ onOpenProfile, userEmail, theme, toggleTheme }) {
   const handleLogout = () => {
-    localStorage.removeItem('token');
-    localStorage.removeItem('email');
-    window.location.href = '/login';
+    logout();
   };
 
   return (

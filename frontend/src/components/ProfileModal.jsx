@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { X, Lock, User as UserIcon } from 'lucide-react';
-import api from '../services/api';
+import api, { logout } from '../services/api';
 
 export default function ProfileModal({ isOpen, onClose, onShowToast }) {
   const [profile, setProfile] = useState({
@@ -30,7 +30,13 @@ export default function ProfileModal({ isOpen, onClose, onShowToast }) {
   const fetchProfile = async () => {
     try {
       const response = await api.get('/users/profile');
-      setProfile(response.data);
+      const data = response.data;
+      setProfile({
+        firstName: data.firstName || '',
+        lastName: data.lastName || '',
+        email: data.email || '',
+        phoneNumber: data.phoneNumber || ''
+      });
     } catch (err) {
       onShowToast(err.response?.data?.message || 'Failed to fetch profile', true);
     }
@@ -41,11 +47,17 @@ export default function ProfileModal({ isOpen, onClose, onShowToast }) {
     setErrors({});
     try {
       const response = await api.put('/users/profile', {
-        firstName: profile.firstName,
-        lastName: profile.lastName,
-        phoneNumber: profile.phoneNumber
+        firstName: profile.firstName || '',
+        lastName: profile.lastName || '',
+        phoneNumber: profile.phoneNumber || ''
       });
-      setProfile(response.data);
+      const data = response.data;
+      setProfile({
+        firstName: data.firstName || '',
+        lastName: data.lastName || '',
+        email: data.email || '',
+        phoneNumber: data.phoneNumber || ''
+      });
       onShowToast('Profile updated successfully!', false);
       onClose();
     } catch (err) {
@@ -74,9 +86,7 @@ export default function ProfileModal({ isOpen, onClose, onShowToast }) {
       onShowToast('Password changed successfully! Please log in again.', false);
       // Wait a moment so the toast is visible, then logout
       setTimeout(() => {
-        localStorage.removeItem('token');
-        localStorage.removeItem('email');
-        window.location.href = '/login';
+        logout();
       }, 1500);
     } catch (err) {
       if (err.response?.data?.errors) {

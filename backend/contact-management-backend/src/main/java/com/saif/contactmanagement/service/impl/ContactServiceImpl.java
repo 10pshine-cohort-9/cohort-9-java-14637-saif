@@ -27,10 +27,12 @@ public class ContactServiceImpl implements ContactService {
 
     private final ContactRepository contactRepository;
     private final CurrentUserProvider currentUserProvider;
+    private final jakarta.validation.Validator validator;
 
-    public ContactServiceImpl(ContactRepository contactRepository, CurrentUserProvider currentUserProvider) {
+    public ContactServiceImpl(ContactRepository contactRepository, CurrentUserProvider currentUserProvider, jakarta.validation.Validator validator) {
         this.contactRepository = contactRepository;
         this.currentUserProvider = currentUserProvider;
+        this.validator = validator;
     }
 
     private void validateOwnership(Contact contact) {
@@ -121,19 +123,32 @@ public class ContactServiceImpl implements ContactService {
         }
 
         for (Contact contact : contacts) {
-            if (contact.getFirstName() == null || contact.getFirstName().isBlank()) {
-                throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "First name is required for all imported contacts");
-            }
-            if (contact.getLastName() == null || contact.getLastName().isBlank()) {
-                throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "Last name is required for all imported contacts");
-            }
-            if (contact.getFirstName().length() > 50 || contact.getLastName().length() > 50) {
-                throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "First name and last name must not exceed 50 characters");
-            }
+            validateImportedContact(contact);
             contact.setUser(currentUser);
         }
 
         contactRepository.saveAll(contacts);
         return contacts.size();
+    }
+
+    private void validateImportedContact(Contact contact) {
+        com.saif.contactmanagement.dto.request.ContactRequest contactRequest = new com.saif.contactmanagement.dto.request.ContactRequest();
+        contactRequest.setFirstName(contact.getFirstName());
+        contactRequest.setLastName(contact.getLastName());
+        contactRequest.setTitle(contact.getTitle());
+        contactRequest.setEmail(contact.getEmail());
+        contactRequest.setPhoneNumber(contact.getPhoneNumber());
+        contactRequest.setCompany(contact.getCompany());
+        contactRequest.setAddress(contact.getAddress());
+        contactRequest.setNotes(contact.getNotes());
+        contactRequest.setFavorite(contact.getFavorite());
+        contactRequest.setEmails(contact.getEmails());
+        contactRequest.setPhoneNumbers(contact.getPhoneNumbers());
+
+        java.util.Set<jakarta.validation.ConstraintViolation<com.saif.contactmanagement.dto.request.ContactRequest>> violations = validator.validate(contactRequest);
+        if (!violations.isEmpty()) {
+            String message = violations.iterator().next().getMessage();
+            throw new ResponseStatusException(HttpStatus.BAD_REQUEST, message);
+        }
     }
 }

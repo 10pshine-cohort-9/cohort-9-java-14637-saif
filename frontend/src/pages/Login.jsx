@@ -1,7 +1,7 @@
 import React, { useState } from 'react';
 import { Link } from 'react-router-dom';
 import { Mail, Lock, Users } from 'lucide-react';
-import api from '../services/api';
+import api, { AUTH_FLAG_KEY, EMAIL_KEY } from '../services/api';
 
 export default function Login({ onShowToast }) {
   const [email, setEmail] = useState('');
@@ -16,10 +16,10 @@ export default function Login({ onShowToast }) {
 
     try {
       const response = await api.post('/auth/login', { email, password });
-      const token = response.data.accessToken;
+      // The access token is set as an HttpOnly cookie by the server; it is never exposed to JS.
       const userEmail = response.data.user?.email || email;
-      localStorage.setItem('token', token);
-      localStorage.setItem('email', userEmail);
+      localStorage.setItem(EMAIL_KEY, userEmail);
+      localStorage.setItem(AUTH_FLAG_KEY, 'true');
       onShowToast('Welcome back!', false);
       window.location.href = '/';
     } catch (err) {
@@ -49,10 +49,11 @@ export default function Login({ onShowToast }) {
 
         <form onSubmit={handleSubmit}>
           <div className="form-group">
-            <label className="form-label">Email Address</label>
+            <label className="form-label" htmlFor="login-email">Email Address</label>
             <div style={{ position: 'relative' }}>
               <Mail size={18} style={{ position: 'absolute', left: '14px', top: '15px', color: 'var(--text-secondary)' }} />
               <input
+                id="login-email"
                 type="email"
                 className="form-input"
                 style={{ paddingLeft: '44px', width: '100%' }}
@@ -65,10 +66,11 @@ export default function Login({ onShowToast }) {
           </div>
 
           <div className="form-group">
-            <label className="form-label">Password</label>
+            <label className="form-label" htmlFor="login-password">Password</label>
             <div style={{ position: 'relative' }}>
               <Lock size={18} style={{ position: 'absolute', left: '14px', top: '15px', color: 'var(--text-secondary)' }} />
               <input
+                id="login-password"
                 type="password"
                 className="form-input"
                 style={{ paddingLeft: '44px', width: '100%' }}

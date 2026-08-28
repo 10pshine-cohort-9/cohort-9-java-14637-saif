@@ -6,13 +6,10 @@ This guide contains the instructions, request/response models, and code patterns
 
 ## 1. General Configuration
 
-- **API Base URL**: `http://localhost:3030`
-- **Authentication**: JWT stateless authentication.
-- **Authorization Header**: Client must include the JWT token in all secure requests:
-  ```http
-  Authorization: Bearer <your_jwt_token_here>
-  ```
-- **Content Type**: `application/json`
+- **API Base URL**: `http://localhost:3030/api`
+- **Authentication**: JWT issued as an **HttpOnly, Secure, SameSite=Lax cookie** (`ACCESS_TOKEN`) — the token is never exposed to JavaScript or included in response bodies. The browser sends it automatically on every request to the API origin; clients must call requests with `credentials: 'include'` (fetch) or `withCredentials: true` (axios).
+- **CSRF Protection**: Because auth is cookie-based, all state-changing requests (`POST`/`PUT`/`DELETE`, except `/api/auth/login` and `/api/auth/register`) require a CSRF token. The server issues a readable `XSRF-TOKEN` cookie on every response; the client must echo its value back in an `X-XSRF-TOKEN` request header. Axios does this automatically when configured with `withXSRFToken: true`.
+- **Content Type**: `application/json` for all JSON endpoints. The CSV import/export endpoints below use different content types (`multipart/form-data` and `text/csv` respectively).
 
 ---
 
@@ -60,10 +57,10 @@ Register a new user using either email or phone number.
   ```
 
 ### 3.2 User Login (Sign-In)
-Authenticate credentials and get a JWT token.
+Authenticate credentials. On success, the server sets the `ACCESS_TOKEN` cookie (HttpOnly/Secure/SameSite=Lax) — the token itself is **not** included in the response body.
 
 - **URL**: `POST /api/auth/login`
-- **Access**: Public
+- **Access**: Public (exempt from CSRF)
 - **Request Body**:
   ```json
   {
@@ -74,10 +71,24 @@ Authenticate credentials and get a JWT token.
 - **Response** (`200 OK`):
   ```json
   {
-    "token": "eyJhbGciOiJIUzI1NiJ9.eyJzdWIiOiJzYWlm...",
-    "email": "saif@example.com"
+    "tokenType": "Bearer",
+    "expiresIn": 3600,
+    "user": {
+      "id": 1,
+      "firstName": "Saif",
+      "lastName": "Ul Hassan",
+      "email": "saif@example.com",
+      "phoneNumber": "+1234567890"
+    }
   }
   ```
+
+### 3.2.1 Logout
+Clears the `ACCESS_TOKEN` cookie server-side.
+
+- **URL**: `POST /api/auth/logout`
+- **Access**: Public
+- **Response** (`200 OK`): No response body.
 
 ### 3.3 Get Current User Profile
 Retrieve the details of the logged-in user.
@@ -330,38 +341,62 @@ Search contacts by first name or last name using keyword queries. Capped at a ma
   - `direction` (optional, default: `asc`): Sort direction.
 - **Response** (`200 OK`): Paginated contacts result.
 
+### 4.7 Import Contacts from CSV
+Import contacts from a CSV file. The CSV must use the UTF-8 charset and include a header row matching the export format (`firstName,lastName,title,email,phoneNumber,company,address,notes,favorite,emails,phoneNumbers`).
+
+- **URL**: `POST /api/contacts/import`
+- **Access**: Secure
+- **Content Type**: `multipart/form-data`
+- **Request Body**: A `file` form field containing the `.csv` file.
+- **Response** (`200 OK`):
+  ```json
+  {
+    "importedCount": 5
+  }
+  ```
+
+### 4.8 Export Contacts to CSV
+Export all of the current user's contacts as a CSV file.
+
+- **URL**: `GET /api/contacts/export`
+- **Access**: Secure
+- **Response** (`200 OK`):
+  - **Content-Type**: `text/csv`
+  - **Content-Disposition**: `attachment; filename="contacts.csv"`
+  - **Body**: Raw CSV content, UTF-8 encoded.
+
 ---
 
 ## 5. React Integration Patterns
 
-### 5.1 Setting up Axios with JWT Interceptor
+### 5.1 Setting up Axios for Cookie-Based Auth
 
-Here is the standard Axios instance implementation to handle authorization headers automatically in the React frontend:
+The access token is an HttpOnly cookie set by the server — the frontend never reads or stores it. The Axios instance only needs `withCredentials` (to send the cookie) and `withXSRFToken` (to echo the CSRF cookie back as a header on state-changing requests):
 
 ```javascript
 import axios from 'axios';
 
+export const EMAIL_KEY = 'email';
+export const AUTH_FLAG_KEY = 'isAuthenticated'; // UI-only hint; the server enforces auth via the cookie
+
+export const logout = async () => {
+  try {
+    await api.post('/auth/logout'); // clears the ACCESS_TOKEN cookie server-side
+  } catch (e) {
+    // Best-effort: proceed with local cleanup even if the request fails.
+  }
+  localStorage.removeItem(EMAIL_KEY);
+  localStorage.removeItem(AUTH_FLAG_KEY);
+  window.location.href = '/login';
+};
+
 const api = axios.create({
   baseURL: 'http://localhost:3030/api',
+  withCredentials: true, // send the ACCESS_TOKEN cookie
+  withXSRFToken: true,   // echo the XSRF-TOKEN cookie as the X-XSRF-TOKEN header
 });
 
-// Request interceptor to attach JWT token
-// NOTE: Storing JWT tokens in localStorage makes them susceptible to XSS. In a production environment,
-// it is recommended to use header-based token storage. If using HttpOnly cookies for session tokens,
-// the backend must be updated to read the token from cookies instead of the Authorization header,
-// and CSRF protection must be enabled.
-api.interceptors.request.use(
-  (config) => {
-    const token = localStorage.getItem('token');
-    if (token) {
-      config.headers.Authorization = `Bearer ${token}`;
-    }
-    return config;
-  },
-  (error) => Promise.reject(error)
-);
-
-// Response interceptor to handle token expiration (401 Unauthorized)
+// Response interceptor to handle an expired/missing session (401 Unauthorized)
 api.interceptors.response.use(
   (response) => response,
   (error) => {
@@ -370,7 +405,8 @@ api.interceptors.response.use(
       const url = error.config && error.config.url ? String(error.config.url).toLowerCase() : '';
       const isAuthRequest = url && (url.includes('/auth/login') || url.includes('/auth/register'));
       if (!isAuthRequest) {
-        localStorage.removeItem('token');
+        localStorage.removeItem(EMAIL_KEY);
+        localStorage.removeItem(AUTH_FLAG_KEY);
         window.location.href = '/login';
       }
     }
@@ -379,4 +415,12 @@ api.interceptors.response.use(
 );
 
 export default api;
+```
+
+On successful login, set the UI-only auth flag (used by route guards) alongside the display email:
+
+```javascript
+const response = await api.post('/auth/login', { email, password });
+localStorage.setItem(EMAIL_KEY, response.data.user?.email || email);
+localStorage.setItem(AUTH_FLAG_KEY, 'true');
 ```

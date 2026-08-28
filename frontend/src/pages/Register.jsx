@@ -49,10 +49,11 @@ export default function Register({ onShowToast }) {
         <form onSubmit={handleSubmit}>
           <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '15px' }}>
             <div className="form-group">
-              <label className="form-label">First Name</label>
+              <label className="form-label" htmlFor="register-first-name">First Name</label>
               <div style={{ position: 'relative' }}>
                 <User size={16} style={{ position: 'absolute', left: '12px', top: '14px', color: 'var(--text-secondary)' }} />
                 <input
+                  id="register-first-name"
                   type="text"
                   className="form-input"
                   style={{ paddingLeft: '38px', width: '100%' }}
@@ -65,10 +66,11 @@ export default function Register({ onShowToast }) {
             </div>
 
             <div className="form-group">
-              <label className="form-label">Last Name</label>
+              <label className="form-label" htmlFor="register-last-name">Last Name</label>
               <div style={{ position: 'relative' }}>
                 <User size={16} style={{ position: 'absolute', left: '12px', top: '14px', color: 'var(--text-secondary)' }} />
                 <input
+                  id="register-last-name"
                   type="text"
                   className="form-input"
                   style={{ paddingLeft: '38px', width: '100%' }}
@@ -82,10 +84,11 @@ export default function Register({ onShowToast }) {
           </div>
 
           <div className="form-group">
-            <label className="form-label">Email Address</label>
+            <label className="form-label" htmlFor="register-email">Email Address</label>
             <div style={{ position: 'relative' }}>
               <Mail size={16} style={{ position: 'absolute', left: '12px', top: '14px', color: 'var(--text-secondary)' }} />
               <input
+                id="register-email"
                 type="email"
                 className="form-input"
                 style={{ paddingLeft: '38px', width: '100%' }}
@@ -99,10 +102,11 @@ export default function Register({ onShowToast }) {
           </div>
 
           <div className="form-group">
-            <label className="form-label">Phone Number</label>
+            <label className="form-label" htmlFor="register-phone-number">Phone Number</label>
             <div style={{ position: 'relative' }}>
               <Phone size={16} style={{ position: 'absolute', left: '12px', top: '14px', color: 'var(--text-secondary)' }} />
               <input
+                id="register-phone-number"
                 type="text"
                 className="form-input"
                 style={{ paddingLeft: '38px', width: '100%' }}
@@ -115,10 +119,11 @@ export default function Register({ onShowToast }) {
           </div>
 
           <div className="form-group">
-            <label className="form-label">Password</label>
+            <label className="form-label" htmlFor="register-password">Password</label>
             <div style={{ position: 'relative' }}>
               <Lock size={16} style={{ position: 'absolute', left: '12px', top: '14px', color: 'var(--text-secondary)' }} />
               <input
+                id="register-password"
                 type="password"
                 className="form-input"
                 style={{ paddingLeft: '38px', width: '100%' }}

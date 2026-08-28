@@ -47,6 +47,8 @@ class ContactControllerTest {
     private ContactService contactService;
     @Mock
     private jakarta.servlet.http.HttpServletRequest httpServletRequest;
+    @Mock
+    private jakarta.validation.Validator validator;
 
     private ContactController contactController;
     private final com.saif.contactmanagement.security.CurrentUserProvider currentUserProvider = new com.saif.contactmanagement.security.CurrentUserProvider();
@@ -57,7 +59,7 @@ class ContactControllerTest {
 
     @BeforeEach
     void setUp() {
-        contactController = new ContactController(contactService, currentUserProvider, httpServletRequest);
+        contactController = new ContactController(contactService, currentUserProvider, httpServletRequest, validator);
         mockMvc = MockMvcBuilders.standaloneSetup(contactController)
                 .setControllerAdvice(new GlobalExceptionHandler())
                 .build();

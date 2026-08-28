@@ -29,15 +29,17 @@ public class ContactController {
     private final ContactService contactService;
     private final CurrentUserProvider currentUserProvider;
     private final jakarta.servlet.http.HttpServletRequest httpServletRequest;
+    private final jakarta.validation.Validator validator;
 
     private static final java.util.Set<String> ALLOWED_SORT_PROPERTIES = java.util.Set.of(
             "id", "firstName", "lastName", "title", "email", "phoneNumber", "company", "address", "notes", "favorite"
     );
 
-    public ContactController(ContactService contactService, CurrentUserProvider currentUserProvider, jakarta.servlet.http.HttpServletRequest httpServletRequest) {
+    public ContactController(ContactService contactService, CurrentUserProvider currentUserProvider, jakarta.servlet.http.HttpServletRequest httpServletRequest, jakarta.validation.Validator validator) {
         this.contactService = contactService;
         this.currentUserProvider = currentUserProvider;
         this.httpServletRequest = httpServletRequest;
+        this.validator = validator;
     }
 
     private Contact toEntity(ContactRequest request) {
