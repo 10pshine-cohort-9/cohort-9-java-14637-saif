@@ -20,10 +20,13 @@ export default function ContactModal({ isOpen, onClose, contactId, onSaveSuccess
   const [errors, setErrors] = useState({});
 
   useEffect(() => {
+    let active = true;
+    const controller = new AbortController();
+
     if (isOpen) {
       setErrors({});
       if (contactId) {
-        fetchContact(contactId);
+        fetchContact(contactId, controller.signal, () => active);
       } else {
         setForm({
           firstName: '',
@@ -40,11 +43,17 @@ export default function ContactModal({ isOpen, onClose, contactId, onSaveSuccess
         setPhonesList([]);
       }
     }
+
+    return () => {
+      active = false;
+      controller.abort();
+    };
   }, [isOpen, contactId]);
 
-  const fetchContact = async (id) => {
+  const fetchContact = async (id, signal, isActive) => {
     try {
-      const response = await api.get(`/contacts/${id}`);
+      const response = await api.get(`/contacts/${id}`, { signal });
+      if (!isActive()) return;
       const data = response.data;
       setForm({
         firstName: data.firstName || '',
@@ -65,6 +74,10 @@ export default function ContactModal({ isOpen, onClose, contactId, onSaveSuccess
       const phonesArray = Object.entries(data.phoneNumbers || {}).map(([label, value]) => ({ label, value }));
       setPhonesList(phonesArray);
     } catch (err) {
+      if (err.name === 'CanceledError' || err.name === 'AbortError' || err.code === 'ERR_CANCELED' || err.message === 'canceled') {
+        return; // Suppress expected cancellation errors
+      }
+      if (!isActive()) return;
       onShowToast(err.response?.data?.message || 'Failed to fetch contact details', true);
       onClose();
     }
@@ -158,12 +171,23 @@ export default function ContactModal({ isOpen, onClose, contactId, onSaveSuccess
 
   if (!isOpen) return null;
 
+  const srOnlyStyle = {
+    position: 'absolute',
+    width: '1px',
+    height: '1px',
+    padding: 0,
+    margin: '-1px',
+    overflow: 'hidden',
+    clip: 'rect(0, 0, 0, 0)',
+    border: 0
+  };
+
   return (
     <div className="modal-overlay">
       <div className="modal-content glass-panel">
         <div className="modal-header">
           <h2 className="modal-title">{contactId ? 'Edit Contact' : 'Create Contact'}</h2>
-          <button className="modal-close" onClick={onClose}>
+          <button className="modal-close" onClick={onClose} aria-label="Close Modal">
             <X size={24} />
           </button>
         </div>
@@ -171,8 +195,9 @@ export default function ContactModal({ isOpen, onClose, contactId, onSaveSuccess
         <form onSubmit={handleSubmit}>
           <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '15px' }}>
             <div className="form-group">
-              <label className="form-label">First Name *</label>
+              <label className="form-label" htmlFor="firstName">First Name *</label>
               <input
+                id="firstName"
                 type="text"
                 className="form-input"
                 value={form.firstName}
@@ -183,8 +208,9 @@ export default function ContactModal({ isOpen, onClose, contactId, onSaveSuccess
             </div>
 
             <div className="form-group">
-              <label className="form-label">Last Name *</label>
+              <label className="form-label" htmlFor="lastName">Last Name *</label>
               <input
+                id="lastName"
                 type="text"
                 className="form-input"
                 value={form.lastName}
@@ -197,8 +223,9 @@ export default function ContactModal({ isOpen, onClose, contactId, onSaveSuccess
 
           <div style={{ display: 'grid', gridTemplateColumns: '80px 1fr', gap: '15px' }}>
             <div className="form-group">
-              <label className="form-label">Title</label>
+              <label className="form-label" htmlFor="title">Title</label>
               <input
+                id="title"
                 type="text"
                 className="form-input"
                 placeholder="e.g. Mr."
@@ -209,8 +236,9 @@ export default function ContactModal({ isOpen, onClose, contactId, onSaveSuccess
             </div>
 
             <div className="form-group">
-              <label className="form-label">Company</label>
+              <label className="form-label" htmlFor="company">Company</label>
               <input
+                id="company"
                 type="text"
                 className="form-input"
                 placeholder="e.g. Tech Corp"
@@ -223,8 +251,9 @@ export default function ContactModal({ isOpen, onClose, contactId, onSaveSuccess
 
           <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '15px' }}>
             <div className="form-group">
-              <label className="form-label">Primary Email</label>
+              <label className="form-label" htmlFor="email">Primary Email</label>
               <input
+                id="email"
                 type="email"
                 className="form-input"
                 value={form.email}
@@ -234,8 +263,9 @@ export default function ContactModal({ isOpen, onClose, contactId, onSaveSuccess
             </div>
 
             <div className="form-group">
-              <label className="form-label">Primary Phone</label>
+              <label className="form-label" htmlFor="phoneNumber">Primary Phone</label>
               <input
+                id="phoneNumber"
                 type="text"
                 className="form-input"
                 value={form.phoneNumber}
@@ -256,7 +286,9 @@ export default function ContactModal({ isOpen, onClose, contactId, onSaveSuccess
             {errors.emails && <div className="form-error" style={{ marginBottom: '10px' }}>{errors.emails}</div>}
             {emailsList.map((item, idx) => (
               <div key={idx} className="map-field-row">
+                <label htmlFor={`email-label-${idx}`} style={srOnlyStyle}>Email Label {idx + 1}</label>
                 <input
+                  id={`email-label-${idx}`}
                   type="text"
                   placeholder="Label (e.g. Work)"
                   className="form-input map-field-label"
@@ -264,7 +296,9 @@ export default function ContactModal({ isOpen, onClose, contactId, onSaveSuccess
                   onChange={(e) => handleEmailChange(idx, 'label', e.target.value)}
                   required
                 />
+                <label htmlFor={`email-value-${idx}`} style={srOnlyStyle}>Email Address {idx + 1}</label>
                 <input
+                  id={`email-value-${idx}`}
                   type="email"
                   placeholder="Email Address"
                   className="form-input map-field-value"
@@ -272,7 +306,7 @@ export default function ContactModal({ isOpen, onClose, contactId, onSaveSuccess
                   onChange={(e) => handleEmailChange(idx, 'value', e.target.value)}
                   required
                 />
-                <button type="button" className="btn btn-danger btn-icon" onClick={() => handleRemoveEmail(idx)}>
+                <button type="button" className="btn btn-danger btn-icon" onClick={() => handleRemoveEmail(idx)} aria-label={`Remove Email ${idx + 1}`}>
                   <Trash2 size={16} />
                 </button>
               </div>
@@ -290,7 +324,9 @@ export default function ContactModal({ isOpen, onClose, contactId, onSaveSuccess
             {errors.phoneNumbers && <div className="form-error" style={{ marginBottom: '10px' }}>{errors.phoneNumbers}</div>}
             {phonesList.map((item, idx) => (
               <div key={idx} className="map-field-row">
+                <label htmlFor={`phone-label-${idx}`} style={srOnlyStyle}>Phone Label {idx + 1}</label>
                 <input
+                  id={`phone-label-${idx}`}
                   type="text"
                   placeholder="Label (e.g. Home)"
                   className="form-input map-field-label"
@@ -298,7 +334,9 @@ export default function ContactModal({ isOpen, onClose, contactId, onSaveSuccess
                   onChange={(e) => handlePhoneChange(idx, 'label', e.target.value)}
                   required
                 />
+                <label htmlFor={`phone-value-${idx}`} style={srOnlyStyle}>Phone Number {idx + 1}</label>
                 <input
+                  id={`phone-value-${idx}`}
                   type="text"
                   placeholder="Phone Number"
                   className="form-input map-field-value"
@@ -306,7 +344,7 @@ export default function ContactModal({ isOpen, onClose, contactId, onSaveSuccess
                   onChange={(e) => handlePhoneChange(idx, 'value', e.target.value)}
                   required
                 />
-                <button type="button" className="btn btn-danger btn-icon" onClick={() => handleRemovePhone(idx)}>
+                <button type="button" className="btn btn-danger btn-icon" onClick={() => handleRemovePhone(idx)} aria-label={`Remove Phone ${idx + 1}`}>
                   <Trash2 size={16} />
                 </button>
               </div>
@@ -314,8 +352,9 @@ export default function ContactModal({ isOpen, onClose, contactId, onSaveSuccess
           </div>
 
           <div className="form-group">
-            <label className="form-label">Address</label>
+            <label className="form-label" htmlFor="address">Address</label>
             <input
+              id="address"
               type="text"
               className="form-input"
               value={form.address}
@@ -325,8 +364,9 @@ export default function ContactModal({ isOpen, onClose, contactId, onSaveSuccess
           </div>
 
           <div className="form-group">
-            <label className="form-label">Notes</label>
+            <label className="form-label" htmlFor="notes">Notes</label>
             <textarea
+              id="notes"
               className="form-input"
               rows="3"
               style={{ resize: 'vertical' }}

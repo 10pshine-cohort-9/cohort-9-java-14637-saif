@@ -104,7 +104,7 @@ export default function ProfileModal({ isOpen, onClose, onShowToast }) {
       <div className="modal-content glass-panel">
         <div className="modal-header">
           <h2 className="modal-title">My Profile</h2>
-          <button className="modal-close" onClick={onClose}>
+          <button className="modal-close" onClick={onClose} aria-label="Close Profile Modal">
             <X size={24} />
           </button>
         </div>
@@ -130,8 +130,9 @@ export default function ProfileModal({ isOpen, onClose, onShowToast }) {
         {activeTab === 'details' ? (
           <form onSubmit={handleProfileSubmit}>
             <div className="form-group">
-              <label className="form-label">Email Address (Read Only)</label>
+              <label className="form-label" htmlFor="profileEmail">Email Address (Read Only)</label>
               <input
+                id="profileEmail"
                 type="text"
                 className="form-input"
                 value={profile.email}
@@ -142,8 +143,9 @@ export default function ProfileModal({ isOpen, onClose, onShowToast }) {
 
             <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '15px' }}>
               <div className="form-group">
-                <label className="form-label">First Name</label>
+                <label className="form-label" htmlFor="profileFirstName">First Name</label>
                 <input
+                  id="profileFirstName"
                   type="text"
                   className="form-input"
                   value={profile.firstName}
@@ -154,8 +156,9 @@ export default function ProfileModal({ isOpen, onClose, onShowToast }) {
               </div>
 
               <div className="form-group">
-                <label className="form-label">Last Name</label>
+                <label className="form-label" htmlFor="profileLastName">Last Name</label>
                 <input
+                  id="profileLastName"
                   type="text"
                   className="form-input"
                   value={profile.lastName}
@@ -167,8 +170,9 @@ export default function ProfileModal({ isOpen, onClose, onShowToast }) {
             </div>
 
             <div className="form-group">
-              <label className="form-label">Phone Number</label>
+              <label className="form-label" htmlFor="profilePhoneNumber">Phone Number</label>
               <input
+                id="profilePhoneNumber"
                 type="text"
                 className="form-input"
                 value={profile.phoneNumber || ''}
@@ -189,8 +193,9 @@ export default function ProfileModal({ isOpen, onClose, onShowToast }) {
         ) : (
           <form onSubmit={handlePasswordSubmit}>
             <div className="form-group">
-              <label className="form-label">Old Password</label>
+              <label className="form-label" htmlFor="oldPassword">Old Password</label>
               <input
+                id="oldPassword"
                 type="password"
                 className="form-input"
                 value={passwordForm.oldPassword}
@@ -201,8 +206,9 @@ export default function ProfileModal({ isOpen, onClose, onShowToast }) {
             </div>
 
             <div className="form-group">
-              <label className="form-label">New Password</label>
+              <label className="form-label" htmlFor="newPassword">New Password</label>
               <input
+                id="newPassword"
                 type="password"
                 className="form-input"
                 value={passwordForm.newPassword}
@@ -213,8 +219,9 @@ export default function ProfileModal({ isOpen, onClose, onShowToast }) {
             </div>
 
             <div className="form-group">
-              <label className="form-label">Confirm New Password</label>
+              <label className="form-label" htmlFor="confirmPassword">Confirm New Password</label>
               <input
+                id="confirmPassword"
                 type="password"
                 className="form-input"
                 value={passwordForm.confirmPassword}

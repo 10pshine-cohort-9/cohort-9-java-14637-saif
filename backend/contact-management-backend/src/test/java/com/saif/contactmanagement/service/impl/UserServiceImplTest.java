@@ -224,9 +224,10 @@ class UserServiceImplTest {
         UserResponse response = userService.updateProfile(1L, request);
 
         assertNotNull(response);
-        assertEquals("Jane", user.getFirstName());
-        assertEquals("Smith", user.getLastName());
-        assertEquals("9876543210", user.getPhoneNumber());
+        assertEquals("Jane", response.getFirstName());
+        assertEquals("Smith", response.getLastName());
+        assertEquals("9876543210", response.getPhoneNumber());
+        verify(userRepository).save(user);
     }
 
     @Test

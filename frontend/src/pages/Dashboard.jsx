@@ -41,7 +41,7 @@ export default function Dashboard({ onShowToast, theme, toggleTheme }) {
   const userEmail = safeStorage.getItem('email') || 'User';
 
   const searchTimeoutRef = useRef(null);
-  const activeSearchQueryRef = useRef('');
+  const latestRequestIdRef = useRef(0);
   const skipNextPageEffectRef = useRef(false);
 
   useEffect(() => {
@@ -62,8 +62,9 @@ export default function Dashboard({ onShowToast, theme, toggleTheme }) {
     fetchContacts();
   }, [page, sortBy, sortDir]);
 
-  const fetchContacts = async (query = searchQuery, requestQuery = query) => {
-    activeSearchQueryRef.current = requestQuery;
+  const fetchContacts = async (query = searchQuery) => {
+    latestRequestIdRef.current += 1;
+    const currentRequestId = latestRequestIdRef.current;
     try {
       let response;
       const params = {
@@ -81,7 +82,7 @@ export default function Dashboard({ onShowToast, theme, toggleTheme }) {
         response = await api.get('/contacts', { params });
       }
 
-      if (activeSearchQueryRef.current !== requestQuery) {
+      if (latestRequestIdRef.current !== currentRequestId) {
         return; // Ignore stale response
       }
 
@@ -89,7 +90,7 @@ export default function Dashboard({ onShowToast, theme, toggleTheme }) {
       setTotalPages(response.data.totalPages || 0);
       setTotalElements(response.data.totalElements || 0);
     } catch (err) {
-      if (activeSearchQueryRef.current === requestQuery) {
+      if (latestRequestIdRef.current === currentRequestId) {
         onShowToast(err.response?.data?.message || 'Failed to fetch contacts', true);
       }
     }
@@ -107,9 +108,9 @@ export default function Dashboard({ onShowToast, theme, toggleTheme }) {
       clearTimeout(searchTimeoutRef.current);
     }
 
-    activeSearchQueryRef.current = val;
+    latestRequestIdRef.current += 1;
     searchTimeoutRef.current = setTimeout(() => {
-      fetchContacts(val, val);
+      fetchContacts(val);
     }, 300);
   };
 
