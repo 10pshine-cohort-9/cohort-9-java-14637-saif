@@ -18,6 +18,19 @@ export default function ContactModal({ isOpen, onClose, contactId, onSaveSuccess
   const [emailsList, setEmailsList] = useState([]); // [{ label: '', value: '' }]
   const [phonesList, setPhonesList] = useState([]);  // [{ label: '', value: '' }]
   const [errors, setErrors] = useState({});
+  const [isLoadingContact, setIsLoadingContact] = useState(false);
+
+  const emptyForm = {
+    firstName: '',
+    lastName: '',
+    title: '',
+    company: '',
+    address: '',
+    notes: '',
+    favorite: false,
+    email: '',
+    phoneNumber: ''
+  };
 
   useEffect(() => {
     let active = true;
@@ -25,22 +38,12 @@ export default function ContactModal({ isOpen, onClose, contactId, onSaveSuccess
 
     if (isOpen) {
       setErrors({});
+      setForm(emptyForm);
+      setEmailsList([]);
+      setPhonesList([]);
       if (contactId) {
+        setIsLoadingContact(true);
         fetchContact(contactId, controller.signal, () => active);
-      } else {
-        setForm({
-          firstName: '',
-          lastName: '',
-          title: '',
-          company: '',
-          address: '',
-          notes: '',
-          favorite: false,
-          email: '',
-          phoneNumber: ''
-        });
-        setEmailsList([]);
-        setPhonesList([]);
       }
     }
 
@@ -80,6 +83,8 @@ export default function ContactModal({ isOpen, onClose, contactId, onSaveSuccess
       if (!isActive()) return;
       onShowToast(err.response?.data?.message || 'Failed to fetch contact details', true);
       onClose();
+    } finally {
+      if (isActive()) setIsLoadingContact(false);
     }
   };
 
@@ -184,15 +189,16 @@ export default function ContactModal({ isOpen, onClose, contactId, onSaveSuccess
 
   return (
     <div className="modal-overlay">
-      <div className="modal-content glass-panel">
+      <div className="modal-content glass-panel" role="dialog" aria-modal="true" aria-labelledby="contactModalTitle">
         <div className="modal-header">
-          <h2 className="modal-title">{contactId ? 'Edit Contact' : 'Create Contact'}</h2>
+          <h2 className="modal-title" id="contactModalTitle">{contactId ? 'Edit Contact' : 'Create Contact'}</h2>
           <button className="modal-close" onClick={onClose} aria-label="Close Modal">
             <X size={24} />
           </button>
         </div>
 
         <form onSubmit={handleSubmit}>
+        <fieldset disabled={isLoadingContact} style={{ border: 0, margin: 0, padding: 0 }}>
           <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '15px' }}>
             <div className="form-group">
               <label className="form-label" htmlFor="firstName">First Name *</label>
@@ -395,6 +401,7 @@ export default function ContactModal({ isOpen, onClose, contactId, onSaveSuccess
               {contactId ? 'Update Contact' : 'Save Contact'}
             </button>
           </div>
+        </fieldset>
         </form>
       </div>
     </div>

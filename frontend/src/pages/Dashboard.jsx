@@ -43,6 +43,7 @@ export default function Dashboard({ onShowToast, theme, toggleTheme }) {
   const searchTimeoutRef = useRef(null);
   const latestRequestIdRef = useRef(0);
   const skipNextPageEffectRef = useRef(false);
+  const fetchContactsRef = useRef(null);
 
   useEffect(() => {
     return () => {
@@ -96,6 +97,10 @@ export default function Dashboard({ onShowToast, theme, toggleTheme }) {
     }
   };
 
+  useEffect(() => {
+    fetchContactsRef.current = fetchContacts;
+  });
+
   const handleSearchChange = (e) => {
     const val = e.target.value;
     setSearchQuery(val);
@@ -110,7 +115,7 @@ export default function Dashboard({ onShowToast, theme, toggleTheme }) {
 
     latestRequestIdRef.current += 1;
     searchTimeoutRef.current = setTimeout(() => {
-      fetchContacts(val);
+      fetchContactsRef.current(val);
     }, 300);
   };
 
