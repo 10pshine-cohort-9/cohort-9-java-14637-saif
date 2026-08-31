@@ -95,7 +95,7 @@ Contacts can be bulk-loaded from a CSV file through the Import button, and the w
 *Importing a batch of 100 contacts from a CSV file.*
 
 ![Dashboard with imported contacts and pagination with limit of 10 contacts on each page]
-<img width="1366" height="768" alt="06-dashboard-with-contacts" src="https://github.com/user-attachments/assets/107f2291-efab-4d75-85b3-13609f753e11" />
+<img width="1366" height="721" alt="image" src="https://github.com/user-attachments/assets/1e794765-489b-46c2-a699-9fdffc7a8475" />
 
 *The dashboard immediately after import, now holding 101 contacts.*
 
