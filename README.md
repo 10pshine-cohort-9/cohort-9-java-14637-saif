@@ -90,7 +90,8 @@ The main working screen: a paginated, searchable list of contacts, with buttons 
 
 **Import and Export**
 Contacts can be bulk-loaded from a CSV file through the Import button, and the whole list can be downloaded the same way through Export.
-<img width="889" height="543" alt="05-import-dialog" src="https://github.com/user-attachments/assets/a340bd53-3961-436c-b588-814be9c84692" />
+<img width="1366" height="721" alt="Screenshot 2026-09-01 003244" src="https://github.com/user-attachments/assets/8754760e-1554-4756-9787-d720579a42d0" />
+
 
 *Importing a batch of 100 contacts from a CSV file.*
 
