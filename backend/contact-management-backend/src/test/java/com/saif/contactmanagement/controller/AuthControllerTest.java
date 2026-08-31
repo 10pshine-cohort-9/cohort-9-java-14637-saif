@@ -31,12 +31,17 @@ class AuthControllerTest {
     @Mock
     private UserService userService;
 
+    @Mock
+    private org.springframework.core.env.Environment env;
+
     @InjectMocks
     private AuthController authController;
 
     @BeforeEach
     @SuppressWarnings("unused")
     void setUp() {
+        lenient().when(env.getActiveProfiles()).thenReturn(new String[]{"local-development"});
+
         mockMvc = MockMvcBuilders.standaloneSetup(authController)
                 .setControllerAdvice(new com.saif.contactmanagement.exception.GlobalExceptionHandler())
                 .build();
@@ -91,11 +96,22 @@ class AuthControllerTest {
                         .contentType(MediaType.APPLICATION_JSON)
                         .content(objectMapper.writeValueAsString(request)))
                 .andExpect(status().isOk())
-                .andExpect(jsonPath("$.accessToken").value("dummyToken"))
+                .andExpect(jsonPath("$.accessToken").doesNotExist())
                 .andExpect(jsonPath("$.expiresIn").value(3600L))
-                .andExpect(jsonPath("$.user.email").value("john.doe@example.com"));
+                .andExpect(jsonPath("$.user.email").value("john.doe@example.com"))
+                .andExpect(cookie().exists("ACCESS_TOKEN"))
+                .andExpect(cookie().value("ACCESS_TOKEN", "dummyToken"))
+                .andExpect(cookie().httpOnly("ACCESS_TOKEN", true))
+                .andExpect(cookie().maxAge("ACCESS_TOKEN", 3600));
 
         verify(userService).login(any(LoginRequest.class));
+    }
+
+    @Test
+    void shouldClearAccessTokenCookieOnLogout() throws Exception {
+        mockMvc.perform(post("/api/auth/logout"))
+                .andExpect(status().isOk())
+                .andExpect(cookie().maxAge("ACCESS_TOKEN", 0));
     }
 
     @Test
@@ -110,5 +126,68 @@ class AuthControllerTest {
                 .andExpect(jsonPath("$.errors").exists());
 
         verify(userService, never()).login(any(LoginRequest.class));
+    }
+
+    @Test
+    void shouldRejectLoginInProductionWhenNotHttps() throws Exception {
+        when(env.getActiveProfiles()).thenReturn(new String[]{"production"});
+        LoginRequest request = new LoginRequest("john.doe@example.com", "password");
+
+        mockMvc.perform(post("/api/auth/login")
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content(objectMapper.writeValueAsString(request)))
+                .andExpect(status().isBadRequest());
+    }
+
+    @Test
+    void shouldAllowLoginInProductionWhenHttps() throws Exception {
+        when(env.getActiveProfiles()).thenReturn(new String[]{"production"});
+        LoginRequest request = new LoginRequest("john.doe@example.com", "password");
+        UserResponse userResponse = new UserResponse(1L, "John", "Doe", "1234567890", "john.doe@example.com");
+        LoginResponse response = new LoginResponse("dummyToken", "Bearer", 3600L, userResponse);
+
+        when(userService.login(any(LoginRequest.class))).thenReturn(response);
+
+        mockMvc.perform(post("/api/auth/login")
+                        .secure(true)
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content(objectMapper.writeValueAsString(request)))
+                .andExpect(status().isOk())
+                .andExpect(cookie().exists("ACCESS_TOKEN"));
+    }
+
+    @Test
+    void shouldAllowLoginInProductionWhenHttpsViaHeader() throws Exception {
+        when(env.getActiveProfiles()).thenReturn(new String[]{"production"});
+        LoginRequest request = new LoginRequest("john.doe@example.com", "password");
+        UserResponse userResponse = new UserResponse(1L, "John", "Doe", "1234567890", "john.doe@example.com");
+        LoginResponse response = new LoginResponse("dummyToken", "Bearer", 3600L, userResponse);
+
+        when(userService.login(any(LoginRequest.class))).thenReturn(response);
+
+        mockMvc.perform(post("/api/auth/login")
+                        .header("X-Forwarded-Proto", "https")
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content(objectMapper.writeValueAsString(request)))
+                .andExpect(status().isOk())
+                .andExpect(cookie().exists("ACCESS_TOKEN"));
+    }
+
+    @Test
+    void shouldRejectLogoutInProductionWhenNotHttps() throws Exception {
+        when(env.getActiveProfiles()).thenReturn(new String[]{"production"});
+
+        mockMvc.perform(post("/api/auth/logout"))
+                .andExpect(status().isBadRequest());
+    }
+
+    @Test
+    void shouldAllowLogoutInProductionWhenHttps() throws Exception {
+        when(env.getActiveProfiles()).thenReturn(new String[]{"production"});
+
+        mockMvc.perform(post("/api/auth/logout")
+                        .secure(true))
+                .andExpect(status().isOk())
+                .andExpect(cookie().maxAge("ACCESS_TOKEN", 0));
     }
 }

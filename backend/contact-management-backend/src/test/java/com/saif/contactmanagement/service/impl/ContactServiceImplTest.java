@@ -37,6 +37,8 @@ class ContactServiceImplTest {
     @Mock
     private ContactRepository contactRepository;
 
+    private final jakarta.validation.Validator validator = jakarta.validation.Validation.buildDefaultValidatorFactory().getValidator();
+
     private ContactServiceImpl contactService;
     private final CurrentUserProvider currentUserProvider = new CurrentUserProvider();
 
@@ -51,7 +53,7 @@ class ContactServiceImplTest {
 
     @BeforeEach
     void setUp() {
-        contactService = new ContactServiceImpl(contactRepository, currentUserProvider);
+        contactService = new ContactServiceImpl(contactRepository, currentUserProvider, validator);
         currentUser = User.builder()
                 .id(1L)
                 .email("user1@example.com")
@@ -352,5 +354,74 @@ class ContactServiceImplTest {
         assertEquals(2, contact.getPhoneNumbers().size());
         assertEquals("+111222333", contact.getPhoneNumbers().get("work"));
         assertEquals("+444555666", contact.getPhoneNumbers().get("home"));
+    }
+
+    // --- Export / Import Contacts Tests ---
+
+    @Test
+    void shouldExportContactsSuccessfully() {
+        mockSecurityContext(currentUser);
+        when(contactRepository.findByUserId(1L)).thenReturn(java.util.List.of(contact));
+
+        String csv = contactService.exportContactsToCsv();
+        assertNotNull(csv);
+        assertTrue(csv.contains("firstName,lastName"));
+        assertTrue(csv.contains("John"));
+        assertTrue(csv.contains("Doe"));
+    }
+
+    @Test
+    void shouldImportContactsSuccessfully() {
+        mockSecurityContext(currentUser);
+        String csv = "firstName,lastName,title,email,phoneNumber,company,address,notes,favorite,emails,phoneNumbers\n"
+                + "Alice,Smith,Ms.,alice@example.com,+1234567890,Tech,123 St,notes,false,,\n";
+
+        when(contactRepository.saveAll(anyList())).thenAnswer(invocation -> invocation.getArgument(0));
+
+        int count = contactService.importContactsFromCsv(csv);
+        assertEquals(1, count);
+        verify(contactRepository).saveAll(anyList());
+    }
+
+    @Test
+    void shouldImportEmptyCsv() {
+        mockSecurityContext(currentUser);
+        int count = contactService.importContactsFromCsv("");
+        assertEquals(0, count);
+        verify(contactRepository, never()).saveAll(anyList());
+    }
+
+    @Test
+    void shouldThrowExceptionWhenImportingBlankFirstName() {
+        mockSecurityContext(currentUser);
+        String csv = "firstName,lastName,title,email,phoneNumber,company,address,notes,favorite,emails,phoneNumbers\n"
+                + ",Smith,Ms.,alice@example.com,+1234567890,Tech,123 St,notes,false,,\n";
+
+        assertThrows(org.springframework.web.server.ResponseStatusException.class,
+                () -> contactService.importContactsFromCsv(csv));
+        verify(contactRepository, never()).saveAll(anyList());
+    }
+
+    @Test
+    void shouldThrowExceptionWhenImportingBlankLastName() {
+        mockSecurityContext(currentUser);
+        String csv = "firstName,lastName,title,email,phoneNumber,company,address,notes,favorite,emails,phoneNumbers\n"
+                + "Alice,,Ms.,alice@example.com,+1234567890,Tech,123 St,notes,false,,\n";
+
+        assertThrows(org.springframework.web.server.ResponseStatusException.class,
+                () -> contactService.importContactsFromCsv(csv));
+        verify(contactRepository, never()).saveAll(anyList());
+    }
+
+    @Test
+    void shouldThrowExceptionWhenImportingFirstNameTooLong() {
+        mockSecurityContext(currentUser);
+        String longFirstName = "A".repeat(51);
+        String csv = "firstName,lastName,title,email,phoneNumber,company,address,notes,favorite,emails,phoneNumbers\n"
+                + longFirstName + ",Smith,Ms.,alice@example.com,+1234567890,Tech,123 St,notes,false,,\n";
+
+        assertThrows(org.springframework.web.server.ResponseStatusException.class,
+                () -> contactService.importContactsFromCsv(csv));
+        verify(contactRepository, never()).saveAll(anyList());
     }
 }

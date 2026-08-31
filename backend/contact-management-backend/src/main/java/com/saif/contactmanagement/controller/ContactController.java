@@ -29,15 +29,17 @@ public class ContactController {
     private final ContactService contactService;
     private final CurrentUserProvider currentUserProvider;
     private final jakarta.servlet.http.HttpServletRequest httpServletRequest;
+    private final jakarta.validation.Validator validator;
 
     private static final java.util.Set<String> ALLOWED_SORT_PROPERTIES = java.util.Set.of(
             "id", "firstName", "lastName", "title", "email", "phoneNumber", "company", "address", "notes", "favorite"
     );
 
-    public ContactController(ContactService contactService, CurrentUserProvider currentUserProvider, jakarta.servlet.http.HttpServletRequest httpServletRequest) {
+    public ContactController(ContactService contactService, CurrentUserProvider currentUserProvider, jakarta.servlet.http.HttpServletRequest httpServletRequest, jakarta.validation.Validator validator) {
         this.contactService = contactService;
         this.currentUserProvider = currentUserProvider;
         this.httpServletRequest = httpServletRequest;
+        this.validator = validator;
     }
 
     private Contact toEntity(ContactRequest request) {
@@ -181,5 +183,37 @@ public class ContactController {
         Pageable pageable = PageRequest.of(page, limitSize, sort);
         Page<Contact> contactsPage = contactService.searchContacts(keyword, pageable);
         return contactsPage.map(this::toResponse);
+    }
+
+    @GetMapping("/export")
+    public org.springframework.http.ResponseEntity<String> exportContacts() {
+        log.info("Exporting contacts to CSV");
+        String csv = contactService.exportContactsToCsv();
+        return org.springframework.http.ResponseEntity.ok()
+                .header(org.springframework.http.HttpHeaders.CONTENT_DISPOSITION, "attachment; filename=\"contacts.csv\"")
+                .contentType(org.springframework.http.MediaType.parseMediaType("text/csv"))
+                .body(csv);
+    }
+
+    @PostMapping(value = "/import", consumes = org.springframework.http.MediaType.MULTIPART_FORM_DATA_VALUE)
+    public org.springframework.http.ResponseEntity<Map<String, Object>> importContacts(
+            @RequestParam("file") org.springframework.web.multipart.MultipartFile file
+    ) {
+        log.info("Importing contacts from CSV file: {}", file.getOriginalFilename());
+        if (file.isEmpty()) {
+            throw new org.springframework.web.server.ResponseStatusException(
+                    HttpStatus.BAD_REQUEST, "File is empty or not uploaded");
+        }
+        try {
+            String csvContent = new String(file.getBytes(), java.nio.charset.StandardCharsets.UTF_8);
+            int importedCount = contactService.importContactsFromCsv(csvContent);
+            Map<String, Object> response = new HashMap<>();
+            response.put("importedCount", importedCount);
+            return org.springframework.http.ResponseEntity.ok(response);
+        } catch (java.io.IOException e) {
+            log.error("Failed to read CSV file: ", e);
+            throw new org.springframework.web.server.ResponseStatusException(
+                    HttpStatus.INTERNAL_SERVER_ERROR, "Failed to read CSV file");
+        }
     }
 }

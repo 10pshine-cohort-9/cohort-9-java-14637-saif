@@ -47,6 +47,8 @@ class ContactControllerTest {
     private ContactService contactService;
     @Mock
     private jakarta.servlet.http.HttpServletRequest httpServletRequest;
+    @Mock
+    private jakarta.validation.Validator validator;
 
     private ContactController contactController;
     private final com.saif.contactmanagement.security.CurrentUserProvider currentUserProvider = new com.saif.contactmanagement.security.CurrentUserProvider();
@@ -57,7 +59,7 @@ class ContactControllerTest {
 
     @BeforeEach
     void setUp() {
-        contactController = new ContactController(contactService, currentUserProvider, httpServletRequest);
+        contactController = new ContactController(contactService, currentUserProvider, httpServletRequest, validator);
         mockMvc = MockMvcBuilders.standaloneSetup(contactController)
                 .setControllerAdvice(new GlobalExceptionHandler())
                 .build();
@@ -497,5 +499,57 @@ class ContactControllerTest {
                         .param("keyword", "test")
                         .param("direction", "asc123"))
                 .andExpect(status().isBadRequest());
+    }
+
+    // --- Export / Import Contacts Controller Tests ---
+
+    @Test
+    void shouldExportContactsSuccessfully() throws Exception {
+        when(contactService.exportContactsToCsv()).thenReturn("firstName,lastName\nJohn,Doe");
+
+        mockMvc.perform(get("/api/contacts/export"))
+                .andExpect(status().isOk())
+                .andExpect(header().string(org.springframework.http.HttpHeaders.CONTENT_DISPOSITION, "attachment; filename=\"contacts.csv\""))
+                .andExpect(content().contentType("text/csv"))
+                .andExpect(content().string("firstName,lastName\nJohn,Doe"));
+
+        verify(contactService).exportContactsToCsv();
+    }
+
+    @Test
+    void shouldImportContactsSuccessfully() throws Exception {
+        org.springframework.mock.web.MockMultipartFile file = new org.springframework.mock.web.MockMultipartFile(
+                "file", "contacts.csv", "text/csv", "firstName,lastName\nAlice,Smith".getBytes());
+
+        when(contactService.importContactsFromCsv(anyString())).thenReturn(1);
+
+        mockMvc.perform(multipart("/api/contacts/import").file(file))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.importedCount").value(1));
+
+        verify(contactService).importContactsFromCsv(anyString());
+    }
+
+    @Test
+    void shouldReturnBadRequestWhenImportFileIsEmpty() throws Exception {
+        org.springframework.mock.web.MockMultipartFile file = new org.springframework.mock.web.MockMultipartFile(
+                "file", "contacts.csv", "text/csv", new byte[0]);
+
+        mockMvc.perform(multipart("/api/contacts/import").file(file))
+                .andExpect(status().isBadRequest());
+    }
+
+    @Test
+    void shouldReturnInternalServerErrorWhenReadingFileFails() throws Exception {
+        org.springframework.mock.web.MockMultipartFile errorFile = new org.springframework.mock.web.MockMultipartFile(
+                "file", "contacts.csv", "text/csv", "some content".getBytes()) {
+            @Override
+            public byte[] getBytes() throws java.io.IOException {
+                throw new java.io.IOException("Simulated read failure");
+            }
+        };
+
+        mockMvc.perform(multipart("/api/contacts/import").file(errorFile))
+                .andExpect(status().isInternalServerError());
     }
 }
