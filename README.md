@@ -145,7 +145,7 @@ cd backend/contact-management-backend
 export DB_URL="jdbc:sqlserver://localhost:1433;databaseName=contact_management;encrypt=true;trustServerCertificate=true"
 export DB_USERNAME="sa"
 export DB_PASSWORD="your-db-password"
-export JWT_SECRET="y1+8HoW/SrUID59fXwV4ySo+9c8aENlJP2u/VbaahhE="  # example only — generate a unique Base64-encoded HMAC secret per environment, e.g. `openssl rand -base64 32`
++export JWT_SECRET="$(openssl rand -base64 32)"
 export SPRING_PROFILES_ACTIVE=local-development
 mvn spring-boot:run
 ```
