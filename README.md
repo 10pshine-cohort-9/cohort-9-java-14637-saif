@@ -94,7 +94,7 @@ Contacts can be bulk-loaded from a CSV file through the Import button, and the w
 
 *Importing a batch of 100 contacts from a CSV file.*
 
-![Dashboard with imported contacts and pagination with limit of 10 contacts on each page]<img width="1366" height="721" alt="Dashboard with imported contacts and pagination with limit of 10 contacts on each page" src="https://github.com/user-attachments/assets/1e794765-489b-46c2-a699-9fdffc7a8475" />
+<img width="1366" height="721" alt="Dashboard with imported contacts and pagination with limit of 10 contacts on each page" src="https://github.com/user-attachments/assets/1e794765-489b-46c2-a699-9fdffc7a8475" />
 
 *The dashboard immediately after import, now holding 101 contacts.*
 
@@ -145,7 +145,7 @@ cd backend/contact-management-backend
 export DB_URL="jdbc:sqlserver://localhost:1433;databaseName=contact_management;encrypt=true;trustServerCertificate=true"
 export DB_USERNAME="sa"
 export DB_PASSWORD="your-db-password"
-export JWT_SECRET="a-long-random-secret-used-to-sign-jwts"
+export JWT_SECRET="y1+8HoW/SrUID59fXwV4ySo+9c8aENlJP2u/VbaahhE="  # example only — generate a unique Base64-encoded HMAC secret per environment, e.g. `openssl rand -base64 32`
 export SPRING_PROFILES_ACTIVE=local-development
 mvn spring-boot:run
 ```
