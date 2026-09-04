@@ -73,8 +73,7 @@ A login form and a registration form, with redirection to the contact dashboard 
 
 | Login | Registration |
 |---|---|
-<img width="1366" height="768" alt="01-login" src="https://github.com/user-attachments/assets/bb08908f-b3be-4f7c-9ab0-ce7385b31bc6" />
-<img width="1366" height="768" alt="02-register" src="https://github.com/user-attachments/assets/2e8731b7-15a4-4d56-9cd1-cbdea6727e7e" />
+| <img width="1366" height="768" alt="01-login" src="https://github.com/user-attachments/assets/bb08908f-b3be-4f7c-9ab0-ce7385b31bc6" /> | <img width="1366" height="768" alt="02-register" src="https://github.com/user-attachments/assets/2e8731b7-15a4-4d56-9cd1-cbdea6727e7e" /> |
 
 
 **Contact Dashboard**
@@ -95,7 +94,7 @@ Contacts can be bulk-loaded from a CSV file through the Import button, and the w
 
 *Importing a batch of 100 contacts from a CSV file.*
 
-![Dashboard with imported contacts and pagination with limit of 10 contacts on each page]
+![Dashboard with imported contacts and pagination with limit of 10 contacts on each page]<img width="1366" height="721" alt="Dashboard with imported contacts and pagination with limit of 10 contacts on each page" src="https://github.com/user-attachments/assets/1e794765-489b-46c2-a699-9fdffc7a8475" />
 
 *The dashboard immediately after import, now holding 101 contacts.*
 
@@ -112,11 +111,7 @@ Shows the logged-in user's details, with a change-password form and a logout act
 
 | Profile Details | Change Password |
 |---|---|
-| ![Profile details]<img width="1366" height="768" alt="Screenshot 2026-09-01 002924" src="https://github.com/user-attachments/assets/5af52e22-bc01-4602-96b9-998b2c0fac0a" />
-
- | ![Change password]
- <img width="1366" height="768" alt="Screenshot 2026-09-01 002938" src="https://github.com/user-attachments/assets/2d57e1af-d6bd-44bb-8d37-06b955552a58" />
-|
+| <img width="1366" height="768" alt="Profile details" src="https://github.com/user-attachments/assets/5af52e22-bc01-4602-96b9-998b2c0fac0a" /> | <img width="1366" height="768" alt="Change password" src="https://github.com/user-attachments/assets/2d57e1af-d6bd-44bb-8d37-06b955552a58" /> |
 
 ## Repository layout
 
@@ -147,6 +142,11 @@ The backend expects a running SQL Server instance and reads its connection detai
 
 ```bash
 cd backend/contact-management-backend
+export DB_URL="jdbc:sqlserver://localhost:1433;databaseName=contact_management;encrypt=true;trustServerCertificate=true"
+export DB_USERNAME="sa"
+export DB_PASSWORD="your-db-password"
+export JWT_SECRET="a-long-random-secret-used-to-sign-jwts"
+export SPRING_PROFILES_ACTIVE=local-development
 mvn spring-boot:run
 ```
 
